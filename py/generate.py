@@ -1,0 +1,8 @@
+
+import catalog_generator
+
+CatalogGenerator = catalog_generator.CatalogGenerator(configFile="catgen.cfg")
+CatalogGenerator.getConfig()
+CatalogGenerator.getLists()
+CatalogGenerator.generate_randoms()
+
