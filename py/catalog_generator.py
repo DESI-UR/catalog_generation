@@ -264,6 +264,8 @@ class CatalogGenerator():
             from ROOT import Galaxy
         flatlistv = self.vecgen2(self.n_rnd)
         self.hist0= plt.hist(self.radlist, bins=400)
+        plt.savefig("example.pdf")
+        print('histogram generated')
         flatlistr = self.rgen(self.hist0, self.n_rnd)
         print(len(flatlistv), len(flatlistr))
         flatlist  = [self.scale(flatlistv[k], flatlistr[k]) for k in range(self.n_rnd)]
@@ -278,10 +280,10 @@ class CatalogGenerator():
         zlist3    = []
         flatlist2 = []
         galaxy    = Galaxy()
-        if self.coordinates == 1:
-            raarr = pharr*(180./np.pi)
-            decarr = ((np.pi/2.)-tharr)*(180./np.pi)
-        for i in range(nflat):
+        raarr     = pharr*(180./np.pi)
+        decarr    = ((np.pi/2.)-tharr)*(180./np.pi)
+        
+        for i in range(self.n_flat):
             galaxy.z = zarr[i]
             if self.coordinates == 0:
                 galaxy.phi = pharr[i]
@@ -343,12 +345,11 @@ class CatalogGenerator():
         zarr = np.array(zlist3)
         zlist3 = []
         totlist3 = []
-        if coordinates == 1:
-            raarr = pharr*(180./np.pi)
-            decarr = ((np.pi/2.)-tharr)*(180./np.pi)
-        for i in range(nflat):
+        raarr = pharr*(180./np.pi)
+        decarr = ((np.pi/2.)-tharr)*(180./np.pi)
+        for i in range(self.n_flat):
             galaxy.z = zarr[i]
-            if coordinates == 0:
+            if self.coordinates == 0:
                 galaxy.phi = pharr[i]
                 galaxy.theta = tharr[i]
                 galaxy.w = warr[i]
