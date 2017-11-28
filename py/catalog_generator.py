@@ -17,6 +17,7 @@ from astropy.cosmology import FlatLambdaCDM, z_at_value
 import astropy.units as u
 import sys
 from ROOT import TFile, TTree, gROOT
+import os
 
 NSIDE = -1
 fbool = False
@@ -40,8 +41,8 @@ class CatalogGenerator():
         self.num_random = int(self.config.get("N Catalogs", "nrandom"))
         self.num_mock   = int(self.config.get("N Catalogs", "nmock"))
         # output filenames
-        self.fname_random = self.config.get("File Names", "mockout")
-        self.fname_mock   = self.config.get("File Names", "randout")
+        self.fname_random = self.config.get("File Names", "randout")
+        self.fname_mock   = self.config.get("File Names", "mockout")
         # the following variable defined the coordinate system, 0: theta, phi, 1: RA, DEC
         self.coordinates  = self.config.get("Data Format", "coordinates")
         #
@@ -82,17 +83,17 @@ class CatalogGenerator():
     def genROOTObject(self):
         if self.coordinates == 0:
             gROOT.ProcessLine("struct Galaxy {\
-            double phi;\
-            double theta;\
-            double z;\
-            double w;\
+            float phi;\
+            float theta;\
+            float z;\
+            float w;\
             };" );
         else:
             gROOT.ProcessLine("struct Galaxy {\
-            double ra;\
-            double dec;\
-            double z;\
-            double weight;\
+            float ra;\
+            float dec;\
+            float z;\
+            float weight;\
             };" );
             
     def generate_randoms(self):
@@ -102,14 +103,6 @@ class CatalogGenerator():
             self.genROOTObject()
             from ROOT import Galaxy
         for curr_random in range(self.num_random):
-            tfilename = self.fname_random+"_"+str(curr_random)+".root"
-            self.output      = TFile(tfilename, "RECREATE")
-            self.output_tree = TTree("data_pol", "data_pol")
-            galaxy           = Galaxy()
-            if self.coordinates == 0:
-                self.output_tree.Branch("position_pol", galaxy, "phi/D:theta/D:z/D:w/D")
-            else:
-                self.output_tree.Branch("position_pol", galaxy, "ra/D:dec/D:z/D:weight/D")
             self.random_catgen(curr_random)
 
     def generate_mocks(self):
@@ -119,14 +112,14 @@ class CatalogGenerator():
             self.genROOTObject()
             from ROOT import Galaxy
         for curr_mock in range(self.num_mock):
-            tfilename = self.fname_mock+"_"+str(curr_mock)+".root"
-            self.output = TFile(tfilename, "RECREATE")
-            self.output_tree = TTree("data_pol", "data_pol")
-            galaxy = Galaxy()
-            if self.coordinates == 0:
-                self.output_tree.Branch("position_pol", galaxy, "phi/D:theta/D:z/D:w/D")
-            else:
-                self.output_tree.Branch("position_pol", galaxy, "ra/D:dec/D:z/D:weight/D")
+            #tfilename = self.fname_mock+"_"+str(curr_mock)+".root"
+            #self.output = TFile(tfilename, "RECREATE")
+            #self.output_tree = TTree("data_pol", "data_pol")
+            #galaxy = Galaxy()
+            #if self.coordinates == 0:
+            #    self.output_tree.Branch("position_pol", galaxy, "phi/D:theta/D:z/D:w/D")
+            #else:
+            #    self.output_tree.Branch("position_pol", galaxy, "ra/D:dec/D:z/D:weight/D")
             self.mock_catgen(curr_mock)
 
     def add(self, v1, v2):
@@ -251,7 +244,7 @@ class CatalogGenerator():
         return vl2
 
     def vinvgen(self, cen, gam, nobs):
-        rl = np.random.pareto(gamma-1,nobs)+1
+        rl = np.random.pareto(self.gamma-1,nobs)+1
         vl = self.vecgen(nobs)
         vl2 = [self.add(cen,self.scale(vl[j],rl[j])) for j in range(nobs)]
         return vl2
@@ -262,12 +255,17 @@ class CatalogGenerator():
         except:
             self.genROOTObject()
             from ROOT import Galaxy
+        tfilename   = self.fname_random+"_"+str(ncat)+".root"
+        output      = TFile(tfilename, "RECREATE")
+        output_tree = TTree("data_pol", "data_pol")
+        galaxy      = Galaxy()
+        if self.coordinates == 0:
+            output_tree.Branch("position_pol", galaxy, "phi/F:theta/F:z/F:weight/F")
+        else:
+            output_tree.Branch("position_pol", galaxy, "ra/F:dec/F:z/F:weight/F")
         flatlistv = self.vecgen2(self.n_rnd)
         self.hist0= plt.hist(self.radlist, bins=400)
-        plt.savefig("example.pdf")
-        print('histogram generated')
         flatlistr = self.rgen(self.hist0, self.n_rnd)
-        print(len(flatlistv), len(flatlistr))
         flatlist  = [self.scale(flatlistv[k], flatlistr[k]) for k in range(self.n_rnd)]
         flatlist2 = self.cart2pol(flatlist)
         warr      = np.array([1.]*len(flatlist2[0]))
@@ -282,8 +280,7 @@ class CatalogGenerator():
         galaxy    = Galaxy()
         raarr     = pharr*(180./np.pi)
         decarr    = ((np.pi/2.)-tharr)*(180./np.pi)
-        
-        for i in range(self.n_flat):
+        for i in range(self.n_rnd):
             galaxy.z = zarr[i]
             if self.coordinates == 0:
                 galaxy.phi = pharr[i]
@@ -293,11 +290,43 @@ class CatalogGenerator():
                 galaxy.ra = raarr[i]
                 galaxy.dec = decarr[i]
                 galaxy.weight = warr[i]
-            self.output_tree.Fill()
-        self.output.Write()
-        self.output.Close()
-
+            output_tree.Fill()
+        output.Write()
+        output.Close()
+        # We also write the output in fits format
+        fits_filename = self.fname_random+"_"+str(ncat)+".fits"
+        if os.path.isfile(fits_filename):
+            print("a file with the designated name already exists... please remove the file first")
+            return
+        if self.coordinates == 0:
+            col1 = fits.Column(name="phi",    array=pharr, format='f8')
+            col2 = fits.Column(name="theta",  array=tharr, format='f8')
+            col3 = fits.Column(name="z",      array=zarr,  format='f8')
+            col4 = fits.Column(name="weight", array=warr,  format='f8')
+            
+        else:
+            col1 = fits.Column(name="ra",     array=raarr,  format='f8')
+            col2 = fits.Column(name="dec",    array=decarr, format='f8')
+            col3 = fits.Column(name="z",      array=zarr,   format='f8')
+            col4 = fits.Column(name="weight", array=warr,   format='f8')
+        cols = fits.ColDefs([col1, col2, col3, col4])
+        hdu  = fits.BinTableHDU.from_columns(cols)
+        hdu.writeto(fits_filename)
+        
     def mock_catgen(self, ncat):
+        try:
+            from ROOT import Galaxy
+        except:
+            self.genROOTObject()
+            from ROOT import Galaxy
+        tfilename   = self.fname_mock+"_"+str(ncat)+".root"
+        output      = TFile(tfilename, "RECREATE")
+        output_tree = TTree("data_pol", "data_pol")
+        galaxy      = Galaxy()
+        if self.coordinates == 0:
+            output_tree.Branch("position_pol", galaxy, "phi/F:theta/F:z/F:weight/F")
+        else:
+            output_tree.Branch("position_pol", galaxy, "ra/F:dec/F:z/F:weight/F")
         cenlistv = self.vecgen2(self.n_center)
         cenlistr = self.rgen(self.hist0, self.n_center)
         cenlist = [self.scale(cenlistv[k], cenlistr[k]) for k in range(self.n_center)]
@@ -334,7 +363,7 @@ class CatalogGenerator():
         clumplist2 = []
         totlist2 = self.cart2pol(totlist)
         totlist = []
-        totlist3 = self.racc(self.hist0,totlist2) ### YOU LEFT IT HERE....
+        totlist3 = self.racc(self.hist0,totlist2)
         totlist2 = []
         warr = np.array([1.]*len(totlist3[0]))
         pharr = np.array(totlist3[1])
@@ -358,5 +387,24 @@ class CatalogGenerator():
                 galaxy.dec = decarr[i]
                 galaxy.weight = warr[i]
             output_tree.Fill()
-        self.output.Write()
-        self.output.Close()
+        output.Write()
+        output.Close()
+        # We also write the output in fits format
+        fits_filename = self.fname_mock+"_"+str(ncat)+".fits"
+        if os.path.isfile(fits_filename):
+            print("a file with the designated name already exists... please remove the file first")
+            return
+        if self.coordinates == 0:
+            col1 = fits.Column(name="phi",    array=pharr, format='f8')
+            col2 = fits.Column(name="theta",  array=tharr, format='f8')
+            col3 = fits.Column(name="z",      array=zarr,  format='f8')
+            col4 = fits.Column(name="weight", array=warr,  format='f8')
+            
+        else:
+            col1 = fits.Column(name="ra",     array=raarr,  format='f8')
+            col2 = fits.Column(name="dec",    array=decarr, format='f8')
+            col3 = fits.Column(name="z",      array=zarr,   format='f8')
+            col4 = fits.Column(name="weight", array=warr,   format='f8')
+        cols = fits.ColDefs([col1, col2, col3, col4])
+        hdu  = fits.BinTableHDU.from_columns(cols)
+        hdu.writeto(fits_filename)

@@ -5,4 +5,5 @@ CatalogGenerator = catalog_generator.CatalogGenerator(configFile="data/catgen.cf
 CatalogGenerator.getConfig()
 CatalogGenerator.getLists()
 CatalogGenerator.generate_randoms()
+CatalogGenerator.generate_mocks()
 
