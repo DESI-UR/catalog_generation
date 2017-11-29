@@ -264,8 +264,11 @@ class CatalogGenerator():
         else:
             output_tree.Branch("position_pol", galaxy, "ra/F:dec/F:z/F:weight/F")
         flatlistv = self.vecgen2(self.n_rnd)
-        self.hist0= plt.hist(self.radlist, bins=400)
-        flatlistr = self.rgen(self.hist0, self.n_rnd)
+        try:
+            flatlistr = self.rgen(self.hist0, self.n_rnd)
+        except:
+            self.hist0= plt.hist(self.radlist, bins=400)
+            flatlistr = self.rgen(self.hist0, self.n_rnd)
         flatlist  = [self.scale(flatlistv[k], flatlistr[k]) for k in range(self.n_rnd)]
         flatlist2 = self.cart2pol(flatlist)
         warr      = np.array([1.]*len(flatlist2[0]))
@@ -328,7 +331,11 @@ class CatalogGenerator():
         else:
             output_tree.Branch("position_pol", galaxy, "ra/F:dec/F:z/F:weight/F")
         cenlistv = self.vecgen2(self.n_center)
-        cenlistr = self.rgen(self.hist0, self.n_center)
+        try:
+            cenlistr = self.rgen(self.hist0, self.n_center)
+        except:
+            self.hist0= plt.hist(self.radlist, bins=400)
+            cenlistr = self.rgen(self.hist0, self.n_center)
         cenlist = [self.scale(cenlistv[k], cenlistr[k]) for k in range(self.n_center)]
         cenlistv = []
         cenlistr = []
