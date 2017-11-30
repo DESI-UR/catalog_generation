@@ -179,7 +179,7 @@ class CatalogGenerator():
         for i in range(len(inlist2[0])):
             r = (inlist2[0])[i]
             nsel = random.uniform(0., seln)
-            nbin = int((r-rmin)*nbins/rmax)
+            nbin = int((r-rmin)*nbins/(rmax-rmin))
             pact = (histp[0])[nbin]
             fac = float(pmin)/pact
             nlim = fac*(histo[0])[nbin]
