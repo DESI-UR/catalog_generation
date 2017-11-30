@@ -122,15 +122,18 @@ class CatalogGenerator():
             #    self.output_tree.Branch("position_pol", galaxy, "ra/D:dec/D:z/D:weight/D")
             self.mock_catgen(curr_mock)
 
+    #3-vector addition
     def add(self, v1, v2):
         v = []
         for i in range(3):
             v.append(v1[i]+v2[i])
         return v
 
+    #3-vector scaling
     def scale(self, v, s):
         return [s*v[0],s*v[1],s*v[2]]
 
+    #generate r values based on histogrammed data r distribution
     def rgen(self, histo, nobs):
         nob   = 0
         dlist = []
@@ -148,14 +151,15 @@ class CatalogGenerator():
                 nob = nob + 1
         return dlist
 
+    #generate Gaussian distributed r values
     def gaussrgen(self, mu, sig, nobs):
         llist = []
         for nob in range(nobs):
             leng = random.gauss(mu,sig)
             llist.append(leng)
-            #nob = nob + 1 # this is double incrementing - WRONG
         return llist
 
+    #put list of r,phi,theta tuples through r acceptance based on data r histogram
     def racc(self, histo, inlist):
         outrlist = []
         outplist = []
@@ -174,23 +178,24 @@ class CatalogGenerator():
         pmin  = np.amin(histp[0])
         for i in range(len(inlist2[0])):
             r = (inlist2[0])[i]
-            if (r<rmax) and (r>rmin): #is this really needed? already this condition is applied while filling inlist2
-                nsel = random.uniform(0., seln)
-                nbin = int((r-rmin)*nbins/rmax)
-                pact = (histp[0])[nbin]
-                fac = float(pmin)/pact
-                nlim = fac*(histo[0])[nbin]
-                if (nsel < nlim):
-                    outrlist.append((inlist2[0])[i])
-                    outplist.append((inlist2[1])[i])
-                    outtlist.append((inlist2[2])[i])
+            nsel = random.uniform(0., seln)
+            nbin = int((r-rmin)*nbins/rmax)
+            pact = (histp[0])[nbin]
+            fac = float(pmin)/pact
+            nlim = fac*(histo[0])[nbin]
+            if (nsel < nlim):
+                outrlist.append((inlist2[0])[i])
+                outplist.append((inlist2[1])[i])
+                outtlist.append((inlist2[2])[i])
         return [outrlist,outplist,outtlist]
 
+    #randomly generates unit 3-vector
     def randsphere(self):
         v = [random.gauss(0,1) for i in range(3)]
         fctr = 1.0 / math.sqrt(sum(x*x for x in v))
         return np.array([x * fctr for x in v])
 
+    #randomly generates nobs unit 3-vectors
     def vecgen(self, nobs):
         vlist = []
         for nob in range(nobs):
@@ -198,10 +203,12 @@ class CatalogGenerator():
             vlist.append(nuvec)
         return vlist
 
+    #checks whether unit vector is within data angular mask
     def isinmap(self, vect):
         pixid = hp.vec2pix(self.nside, vect[0], vect[1], vect[2])
         return (self.completeness[pixid] > 0.)
 
+    #randomly generates nobs unit 3-vectors within data angular mask
     def vecgen2(self, nobs):
         nob = 0
         vlist = []
@@ -212,6 +219,7 @@ class CatalogGenerator():
                 nob = nob + 1
         return vlist
 
+    #converts list of cartesian 3-vectors to lists of r's,phi's,theta's
     def cart2pol(self, inlist):
         outrlist = []
         outplist = []
@@ -230,6 +238,7 @@ class CatalogGenerator():
             outtlist.append(theta)
         return [outrlist,outplist,outtlist]
 
+    #puts list of 3-vectors through angular mask acceptance
     def angacc(self, inlist):
         outlist = []
         for v in inlist:
@@ -237,18 +246,21 @@ class CatalogGenerator():
                 outlist.append(v)
         return outlist
 
+    #randomly generates nobs 3-vectors according to Gaussian r distribution
     def vgaussgen(self, cen, mu, sig, nobs):
         rl = self.gaussrgen(mu, sig, nobs)
         vl = self.vecgen(nobs)
         vl2 = [self.add(cen,self.scale(vl[j],rl[j])) for j in range(nobs)]
         return vl2
 
+    #randomly generate nobs 3-vectors according to inverse power r distribution (with lower cutoff at r=1)
     def vinvgen(self, cen, gam, nobs):
         rl = np.random.pareto(self.gamma-1,nobs)+1
         vl = self.vecgen(nobs)
         vl2 = [self.add(cen,self.scale(vl[j],rl[j])) for j in range(nobs)]
         return vl2
 
+    #generate random catalog with data distribution in r,phi,theta
     def random_catgen(self, ncat):
         try:
             from ROOT import Galaxy
@@ -315,7 +327,8 @@ class CatalogGenerator():
         cols = fits.ColDefs([col1, col2, col3, col4])
         hdu  = fits.BinTableHDU.from_columns(cols)
         hdu.writeto(fits_filename)
-        
+
+    #generate mock catalog with BAO signal and clumping, fitting data r,phi,theta distribution
     def mock_catgen(self, ncat):
         try:
             from ROOT import Galaxy
