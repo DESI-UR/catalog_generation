@@ -135,20 +135,21 @@ class CatalogGenerator():
 
     #generate r values based on histogrammed data r distribution
     def rgen(self, histo, nobs):
-        nob   = 0
+        num_obs = 0
         dlist = []
-        nbins = len(histo[0])
-        rmin  = (histo[1])[0]
-        rmax  = (histo[1])[nbins]
+        num_bins = len(histo[0])
+        r_min    = (histo[1])[0]
+        r_max    = (histo[1])[nbins]
         seln  = np.amax(histo[0])
-        while nob < nobs:
-            rsel = random.uniform(rmin,rmax)
-            nbin = int((rsel-rmin)*nbins/rmax)
-            nsel = random.uniform(0.,seln)
-            nlim = (histo[0])[nbin]
+        while num_obs < nobs:
+            rsel = random.uniform(r_min,r_max)
+            nbin = int((rsel-r_min)*num_bins/r_max)
+            nsel = random.uniform(0.,seln) 
+            nlim = (histo[0])[nbin] 
+            # what is the logic here? it does not make sense.
             if (nsel < nlim):
                 dlist.append(rsel)
-                nob = nob + 1
+                num_obs = num_obs + 1
         return dlist
 
     #generate Gaussian distributed r values
@@ -308,26 +309,41 @@ class CatalogGenerator():
             output_tree.Fill()
         output.Write()
         output.Close()
-        # We also write the output in fits format
         fits_filename = self.fname_random+"_"+str(ncat)+".fits"
-        if os.path.isfile(fits_filename):
+        if self.coordinates == 0:
+            write_to_fits(pharr, tharr, zarr, warr, fits_filename)
+        else:
+            write_to_fits(raarr, decarr, zarr, warr, fits_filename)
+            
+    def wroote_to_fits(col1, col2, col3, col4, filename):
+        col_defs = [['phi' 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
+        use_col_defs = col_defs[self.coordinates]
+        # We also write the output in fits format
+        if os.path.isfile(filename):
             print("a file with the designated name already exists... please remove the file first")
             return
+        col1 = fits.Column(name=use_col_defs[0], array=col1, format='f8')
+        col2 = fits.Column(name=use_col_defs[1], array=col2, format='f8')
+        col3 = fits.Column(name=use_col_defs[2], array=col3,  format='f8')
+        col4 = fits.Column(name=use_col_defs[3], array=col4,  format='f8')
+        """
         if self.coordinates == 0:
-            col1 = fits.Column(name="phi",    array=pharr, format='f8')
-            col2 = fits.Column(name="theta",  array=tharr, format='f8')
-            col3 = fits.Column(name="z",      array=zarr,  format='f8')
-            col4 = fits.Column(name="weight", array=warr,  format='f8')
+            col1 = fits.Column(name="phi",    array=col1, format='f8')
+            col2 = fits.Column(name="theta",  array=col2, format='f8')
+            col3 = fits.Column(name="z",      array=col3,  format='f8')
+            col4 = fits.Column(name="weight", array=col4,  format='f8')
             
         else:
             col1 = fits.Column(name="ra",     array=raarr,  format='f8')
             col2 = fits.Column(name="dec",    array=decarr, format='f8')
             col3 = fits.Column(name="z",      array=zarr,   format='f8')
             col4 = fits.Column(name="weight", array=warr,   format='f8')
+        """
         cols = fits.ColDefs([col1, col2, col3, col4])
         hdu  = fits.BinTableHDU.from_columns(cols)
         hdu.writeto(fits_filename)
 
+        
     #generate mock catalog with BAO signal and clumping, fitting data r,phi,theta distribution
     def mock_catgen(self, ncat):
         try:
@@ -411,6 +427,11 @@ class CatalogGenerator():
         output.Close()
         # We also write the output in fits format
         fits_filename = self.fname_mock+"_"+str(ncat)+".fits"
+        if self.coordinates == 0:
+            write_to_fits(pharr, tharr, zarr, warr, fits_filename)
+        else:
+            write_to_fits(raarr, decarr, zarr, warr, fits_filename)
+        """        
         if os.path.isfile(fits_filename):
             print("a file with the designated name already exists... please remove the file first")
             return
@@ -428,3 +449,4 @@ class CatalogGenerator():
         cols = fits.ColDefs([col1, col2, col3, col4])
         hdu  = fits.BinTableHDU.from_columns(cols)
         hdu.writeto(fits_filename)
+        """
