@@ -44,7 +44,7 @@ class CatalogGenerator():
         self.fname_random = self.config.get("File Names", "randout")
         self.fname_mock   = self.config.get("File Names", "mockout")
         # the following variable defined the coordinate system, 0: theta, phi, 1: RA, DEC
-        self.coordinates  = self.config.get("Data Format", "coordinates")
+        self.coordinates  = int(self.config.get("Data Format", "coordinates"))
         #
         self.datafile     = self.config.get('File Names','datafile')
         self.ang_mask     = self.config.get('File Names','angmask')
@@ -112,34 +112,26 @@ class CatalogGenerator():
             self.genROOTObject()
             from ROOT import Galaxy
         for curr_mock in range(self.num_mock):
-            #tfilename = self.fname_mock+"_"+str(curr_mock)+".root"
-            #self.output = TFile(tfilename, "RECREATE")
-            #self.output_tree = TTree("data_pol", "data_pol")
-            #galaxy = Galaxy()
-            #if self.coordinates == 0:
-            #    self.output_tree.Branch("position_pol", galaxy, "phi/D:theta/D:z/D:w/D")
-            #else:
-            #    self.output_tree.Branch("position_pol", galaxy, "ra/D:dec/D:z/D:weight/D")
             self.mock_catgen(curr_mock)
 
-    #3-vector addition
+    # 3-vector addition - is it really needed? numpy add should be faster than this
     def add(self, v1, v2):
         v = []
         for i in range(3):
             v.append(v1[i]+v2[i])
         return v
 
-    #3-vector scaling
+    # 3-vector scaling - is it really needed? numpy add should be faster than this
     def scale(self, v, s):
         return [s*v[0],s*v[1],s*v[2]]
 
-    #generate r values based on histogrammed data r distribution
+    # generate r values based on histogrammed data r distribution
     def rgen(self, histo, nobs):
         num_obs = 0
         dlist = []
         num_bins = len(histo[0])
         r_min    = (histo[1])[0]
-        r_max    = (histo[1])[nbins]
+        r_max    = (histo[1])[num_bins]
         seln  = np.amax(histo[0])
         while num_obs < nobs:
             rsel = random.uniform(r_min,r_max)
@@ -191,16 +183,16 @@ class CatalogGenerator():
         return [outrlist,outplist,outtlist]
 
     #randomly generates unit 3-vector
-    def randsphere(self):
+    def generate_unit_vector(self):
         v = [random.gauss(0,1) for i in range(3)]
-        fctr = 1.0 / math.sqrt(sum(x*x for x in v))
-        return np.array([x * fctr for x in v])
+        factor = 1.0 / math.sqrt(sum(x*x for x in v))
+        return np.array([x * factor for x in v])
 
     #randomly generates nobs unit 3-vectors
     def vecgen(self, nobs):
         vlist = []
         for nob in range(nobs):
-            nuvec = self.randsphere()
+            nuvec = self.generate_unit_vector()
             vlist.append(nuvec)
         return vlist
 
@@ -214,7 +206,7 @@ class CatalogGenerator():
         nob = 0
         vlist = []
         while nob < nobs:
-            nuvec = self.randsphere()
+            nuvec = self.generate_unit_vector()
             if self.isinmap(nuvec):
                 vlist.append(nuvec)
                 nob = nob + 1
@@ -261,6 +253,25 @@ class CatalogGenerator():
         vl2 = [self.add(cen,self.scale(vl[j],rl[j])) for j in range(nobs)]
         return vl2
 
+    def generate_flat_galaxies(self):
+        flatlistv = self.vecgen2(self.n_rnd)
+        try:
+            flatlistr = self.rgen(self.hist0, self.n_rnd)
+        except:
+            self.hist = plt.hist(self.radlist, bins=400)
+            flatlistr = self.rgen(self.hist, self.n_rnd)
+        flatlist  = [self.scale(flatlistv[k], flatlistr[k]) for k in range(self.n_rnd)]
+        flatlist2 = self.cart2pol(flatlist)
+        warr      = np.array([1.]*len(flatlist2[0]))
+        pharr     = np.array(flatlist2[1])
+        tharr     = np.array(flatlist2[2])
+        rlist3    = flatlist2[0]
+        zlist3    = [z_at_value(self.cosmo.comoving_distance, r*u.Mpc, zmin=0.3, zmax=0.8) for r in rlist3]
+        rlist3    = []
+        zarr      = np.array(zlist3)
+        zlist3    = []
+        flatlist2 = []
+    
     #generate random catalog with data distribution in r,phi,theta
     def random_catgen(self, ncat):
         try:
@@ -311,12 +322,13 @@ class CatalogGenerator():
         output.Close()
         fits_filename = self.fname_random+"_"+str(ncat)+".fits"
         if self.coordinates == 0:
-            write_to_fits(pharr, tharr, zarr, warr, fits_filename)
+            self.write_to_fits(pharr, tharr, zarr, warr, fits_filename)
         else:
-            write_to_fits(raarr, decarr, zarr, warr, fits_filename)
+            self.write_to_fits(raarr, decarr, zarr, warr, fits_filename)
             
-    def wroote_to_fits(col1, col2, col3, col4, filename):
+    def write_to_fits(self, col1, col2, col3, col4, filename):
         col_defs = [['phi' 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
+        print(self.coordinates)
         use_col_defs = col_defs[self.coordinates]
         # We also write the output in fits format
         if os.path.isfile(filename):
@@ -326,22 +338,9 @@ class CatalogGenerator():
         col2 = fits.Column(name=use_col_defs[1], array=col2, format='f8')
         col3 = fits.Column(name=use_col_defs[2], array=col3,  format='f8')
         col4 = fits.Column(name=use_col_defs[3], array=col4,  format='f8')
-        """
-        if self.coordinates == 0:
-            col1 = fits.Column(name="phi",    array=col1, format='f8')
-            col2 = fits.Column(name="theta",  array=col2, format='f8')
-            col3 = fits.Column(name="z",      array=col3,  format='f8')
-            col4 = fits.Column(name="weight", array=col4,  format='f8')
-            
-        else:
-            col1 = fits.Column(name="ra",     array=raarr,  format='f8')
-            col2 = fits.Column(name="dec",    array=decarr, format='f8')
-            col3 = fits.Column(name="z",      array=zarr,   format='f8')
-            col4 = fits.Column(name="weight", array=warr,   format='f8')
-        """
         cols = fits.ColDefs([col1, col2, col3, col4])
         hdu  = fits.BinTableHDU.from_columns(cols)
-        hdu.writeto(fits_filename)
+        hdu.writeto(filename)
 
         
     #generate mock catalog with BAO signal and clumping, fitting data r,phi,theta distribution
@@ -428,25 +427,7 @@ class CatalogGenerator():
         # We also write the output in fits format
         fits_filename = self.fname_mock+"_"+str(ncat)+".fits"
         if self.coordinates == 0:
-            write_to_fits(pharr, tharr, zarr, warr, fits_filename)
+            self.write_to_fits(pharr, tharr, zarr, warr, fits_filename)
         else:
-            write_to_fits(raarr, decarr, zarr, warr, fits_filename)
-        """        
-        if os.path.isfile(fits_filename):
-            print("a file with the designated name already exists... please remove the file first")
-            return
-        if self.coordinates == 0:
-            col1 = fits.Column(name="phi",    array=pharr, format='f8')
-            col2 = fits.Column(name="theta",  array=tharr, format='f8')
-            col3 = fits.Column(name="z",      array=zarr,  format='f8')
-            col4 = fits.Column(name="weight", array=warr,  format='f8')
-            
-        else:
-            col1 = fits.Column(name="ra",     array=raarr,  format='f8')
-            col2 = fits.Column(name="dec",    array=decarr, format='f8')
-            col3 = fits.Column(name="z",      array=zarr,   format='f8')
-            col4 = fits.Column(name="weight", array=warr,   format='f8')
-        cols = fits.ColDefs([col1, col2, col3, col4])
-        hdu  = fits.BinTableHDU.from_columns(cols)
-        hdu.writeto(fits_filename)
-        """
+            self.write_to_fits(raarr, decarr, zarr, warr, fits_filename)
+
