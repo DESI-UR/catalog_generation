@@ -162,20 +162,24 @@ class CatalogGenerator():
         rmax  = (histo[1])[nbins]
         inlist2 = [[],[],[]]
         for k in range(len(inlist[0])):
-            if ((inlist[0])[k] > rmin) and ((inlist[0])[k] < rmax):
+            if ((inlist[0])[k] >= rmin) and ((inlist[0])[k] <= rmax):
                 (inlist2[0]).append((inlist[0])[k])
                 (inlist2[1]).append((inlist[1])[k])
                 (inlist2[2]).append((inlist[2])[k])
         seln  = np.amax(histo[0])
         histp = plt.hist(inlist2[0],bins=nbins)
+        histq = [float((histo[0])[k])/(histp[0])[k] for k in range(nbins)]
+        iind  = np.argmax(histq)
+        factr = histq[iind]
+        histr = [binval/factr for binval in histq]
         pmin  = np.amin(histp[0])
         for i in range(len(inlist2[0])):
             r = (inlist2[0])[i]
-            nsel = random.uniform(0., seln)
+            nsel = random.uniform(0., 1.)
             nbin = int((r-rmin)*nbins/(rmax-rmin))
-            pact = (histp[0])[nbin]
-            fac = float(pmin)/pact
-            nlim = fac*(histo[0])[nbin]
+            if nbin == nbins:
+                nbin = nbins - 1
+            nlim = histr[nbin]
             if (nsel < nlim):
                 outrlist.append((inlist2[0])[i])
                 outplist.append((inlist2[1])[i])
