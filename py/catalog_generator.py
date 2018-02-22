@@ -144,6 +144,13 @@ class CatalogGenerator():
                 num_obs = num_obs + 1
         return dlist
 
+    #generate r values based on uniform spatial distribution
+    def urgen(self, rmin, rmax, nobs):
+        umin = float(rmin)/rmax
+        ulist = np.random.uniform(umin*umin*umin, 1, nobs)
+        dlist = [np.power(u,1./3) for u in ulist]
+        return dlist
+
     #generate Gaussian distributed r values
     def gaussrgen(self, mu, sig, nobs):
         llist = []
