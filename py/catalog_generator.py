@@ -114,17 +114,6 @@ class CatalogGenerator():
         for curr_mock in range(self.num_mock):
             self.mock_catgen(curr_mock)
 
-    # 3-vector addition - is it really needed? numpy add should be faster than this
-    def add(self, v1, v2):
-        v = []
-        for i in range(3):
-            v.append(v1[i]+v2[i])
-        return v
-
-    # 3-vector scaling - is it really needed? numpy add should be faster than this
-    def scale(self, v, s):
-        return [s*v[0],s*v[1],s*v[2]]
-
     # generate r values based on histogrammed data r distribution
     def rgen(self, histo, nobs):
         num_obs = 0
@@ -254,14 +243,14 @@ class CatalogGenerator():
     def vgaussgen(self, cen, mu, sig, nobs):
         rl = self.gaussrgen(mu, sig, nobs)
         vl = self.vecgen(nobs)
-        vl2 = [self.add(cen,self.scale(vl[j],rl[j])) for j in range(nobs)]
+        vl2 = [np.add(cen,np.multiply(rl[j],vl[j])) for j in range(nobs)]
         return vl2
 
     #randomly generate nobs 3-vectors according to inverse power r distribution (with lower cutoff at r=1)
     def vinvgen(self, cen, gam, nobs):
         rl = np.random.pareto(self.gamma-1,nobs)+1
         vl = self.vecgen(nobs)
-        vl2 = [self.add(cen,self.scale(vl[j],rl[j])) for j in range(nobs)]
+        vl2 = [np.add(cen,np.multiply(rl[j],vl[j])) for j in range(nobs)]
         return vl2
 
     def generate_flat_galaxies(self):
@@ -271,7 +260,7 @@ class CatalogGenerator():
         except:
             self.hist = plt.hist(self.radlist, bins=400)
             flatlistr = self.rgen(self.hist, self.n_rnd)
-        flatlist  = [self.scale(flatlistv[k], flatlistr[k]) for k in range(self.n_rnd)]
+        flatlist  = [np.multiply(flatlistr[k], flatlistv[k]) for k in range(self.n_rnd)]
         flatlist2 = self.cart2pol(flatlist)
         warr      = np.array([1.]*len(flatlist2[0]))
         pharr     = np.array(flatlist2[1])
@@ -304,7 +293,7 @@ class CatalogGenerator():
         except:
             self.hist0= plt.hist(self.radlist, bins=400)
             flatlistr = self.rgen(self.hist0, self.n_rnd)
-        flatlist  = [self.scale(flatlistv[k], flatlistr[k]) for k in range(self.n_rnd)]
+        flatlist  = [np.multiply(flatlistr[k], flatlistv[k]) for k in range(self.n_rnd)]
         flatlist2 = self.cart2pol(flatlist)
         warr      = np.array([1.]*len(flatlist2[0]))
         pharr     = np.array(flatlist2[1])
@@ -375,7 +364,7 @@ class CatalogGenerator():
         except:
             self.hist0= plt.hist(self.radlist, bins=400)
             cenlistr = self.rgen(self.hist0, self.n_center)
-        cenlist = [self.scale(cenlistv[k], cenlistr[k]) for k in range(self.n_center)]
+        cenlist = [np.multiply(cenlistr[k], cenlistv[k]) for k in range(self.n_center)]
         cenlistv = []
         cenlistr = []
         rimlist = []
@@ -386,7 +375,7 @@ class CatalogGenerator():
         rimlist = []
         flatlistv = self.vecgen2(self.n_flat)
         flatlistr = self.rgen(self.hist0, self.n_flat)
-        flatlist = [self.scale(flatlistv[k],flatlistr[k]) for k in range(self.n_flat)]
+        flatlist = [np.multiply(flatlistr[k],flatlistv[k]) for k in range(self.n_flat)]
         flatlistv = []
         flatlistr = []
         normlist = flatlist + rimlist2
