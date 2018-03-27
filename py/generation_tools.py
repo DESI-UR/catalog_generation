@@ -245,27 +245,61 @@ class GeneralTools():
         return rim_rs, rim_thetas, rim_phis
 
     def generate_clumps(self, r_centers, theta_centers, phi_centers, diagnostics=False):
+        # generate a list to choose among the centers and flats
+        galaxy_selection  = np.random.randint(0, 2, self.nr_clump)
+        num_center_clumps = len(galaxy_selection[galaxy_selection==0])
+        num_flat_clumps   = len(galaxy_selection[galaxy_selection==1])
         # generate flat galaxies (will be returned and be added to the mocks later)
         r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
         # randomly choose indices from centers and flat for the clumps
-        rand_center_idx = np.random.randint(0, len(r_centers), self.n_clump_center)
-        rand_flat_idx   = np.random.randint(0, len(r_flat),    self.n_clump)
+        rand_center_idx = np.random.randint(0, len(r_centers), num_center_clumps)
+        rand_flat_idx   = np.random.randint(0, len(r_flat),    num_flat_clumps)
+        selected_r_centers     = r_centers[rand_center_idx]
+        selected_theta_centers = theta_centers[rand_center_idx]
+        selected_phi_centers   = phi_centers[rand_center_idx]
+        selected_r_flats       = r_flat[rand_flat_idx]
+        selected_theta_flats   = theta_flat[rand_flat_idx]
+        selected_phi_flats     = phi_flat[rand_flat_idx]
         # generate the clump positions with respect to their origin (a center galaxu)
-        clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump_center)))
-        clump_theta    = np.random.uniform(0., 360., self.n_clump_center)
-        clump_phi      = np.random.uniform(-90., 90., self.n_clump_center)
         center_clumps  = []
-        for i in range(self.n_clump_center):
-            center_clumps.append(self.addVectors(np.array([r_centers[rand_center_idx][i], theta_centers[rand_center_idx][i], phi_centers[rand_center_idx][i]]),
-                                                 np.array([clump_r[i], clump_theta[i], clump_phi[i]])))
+        for i in range(num_center_clumps):
+            curr_r_center     = selected_r_centers[i]
+            curr_theta_center = selected_theta_centers[i]
+            curr_phi_center   = selected_phi_centers[i]
+            clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump_center)))
+            clump_theta    = np.random.uniform(0., 360., self.n_clump_center)
+            clump_phi      = np.random.uniform(-90., 90., self.n_clump_center)
+            for j in range(self.n_clump_center):
+                center_clumps.append(self.addVectors(np.array([curr_r_center, curr_theta_center, curr_phi_center]),
+                                                     np.array([clump_r[j], clump_theta[j], clump_phi[j]])))
+
         # generate the clump positions with respect to their origin (a flat galaxu)
-        clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump)))
-        clump_theta    = np.random.uniform(0., 360., self.n_clump)
-        clump_phi      = np.random.uniform(-90., 90., self.n_clump)
         flat_clumps    = []
-        for i in range(self.n_clump):
-            flat_clumps.append(self.addVectors(np.array([r_flat[rand_flat_idx][i], theta_flat[rand_flat_idx][i], phi_flat[rand_flat_idx][i]]),
-                                               np.array([clump_r[i], clump_theta[i], clump_phi[i]])))
+        for i in range(num_flat_clumps):
+            curr_r_flat     = selected_r_flats[i]
+            curr_theta_flat = selected_theta_flats[i]
+            curr_phi_flat   = selected_phi_flats[i]
+            clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump)))
+            clump_theta    = np.random.uniform(0., 360., self.n_clump)
+            clump_phi      = np.random.uniform(-90., 90., self.n_clump)
+            for j in range(self.n_clump):
+                flat_clumps.append(self.addVectors(np.array([curr_r_flat, curr_theta_flat, curr_phi_flat]),
+                                                   np.array([clump_r[j], clump_theta[j], clump_phi[j]])))
         
         return (np.array(center_clumps)).transpose(), (np.array(flat_clumps)).transpose(), np.array([r_flat, theta_flat, phi_flat])
         
+    def write_to_fits(self, col1, col2, col3, col4, filename):
+        col_defs = [['phi' 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
+        print(self.coordinates)
+        use_col_defs = col_defs[self.coordinates]
+        # We also write the output in fits format
+        if os.path.isfile(filename):
+            print("a file with the designated name already exists... please remove the file first")
+            return
+        col1 = fits.Column(name=use_col_defs[0], array=col1, format='f8')
+        col2 = fits.Column(name=use_col_defs[1], array=col2, format='f8')
+        col3 = fits.Column(name=use_col_defs[2], array=col3,  format='f8')
+        col4 = fits.Column(name=use_col_defs[3], array=col4,  format='f8')
+        cols = fits.ColDefs([col1, col2, col3, col4])
+        hdu  = fits.BinTableHDU.from_columns(cols)
+        hdu.writeto(filename)
