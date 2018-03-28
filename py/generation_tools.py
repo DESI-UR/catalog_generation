@@ -271,8 +271,10 @@ class GeneralTools():
             clump_theta    = np.random.uniform(0., 360., self.n_clump_center)
             clump_phi      = np.random.uniform(-90., 90., self.n_clump_center)
             for j in range(self.n_clump_center):
-                center_clumps.append(self.addVectors(np.array([curr_r_center, curr_theta_center, curr_phi_center]),
-                                                     np.array([clump_r[j], clump_theta[j], clump_phi[j]])))
+                pixel      = hp.ang2pix(self.nside, curr_theta[j], curr_phi[j], lonlat=True)
+                if self.completeness[pixel] > 0:
+                    center_clumps.append(self.addVectors(np.array([curr_r_center, curr_theta_center, curr_phi_center]),
+                                                         np.array([clump_r[j], clump_theta[j], clump_phi[j]])))
 
         # generate the clump positions with respect to their origin (a flat galaxu)
         flat_clumps    = []
@@ -284,8 +286,10 @@ class GeneralTools():
             clump_theta    = np.random.uniform(0., 360., self.n_clump)
             clump_phi      = np.random.uniform(-90., 90., self.n_clump)
             for j in range(self.n_clump):
-                flat_clumps.append(self.addVectors(np.array([curr_r_flat, curr_theta_flat, curr_phi_flat]),
-                                                   np.array([clump_r[j], clump_theta[j], clump_phi[j]])))
+                pixel      = hp.ang2pix(self.nside, curr_theta[j], curr_phi[j], lonlat=True)
+                if self.completeness[pixel] > 0:
+                    flat_clumps.append(self.addVectors(np.array([curr_r_flat, curr_theta_flat, curr_phi_flat]),
+                                                       np.array([clump_r[j], clump_theta[j], clump_phi[j]])))
         
         return (np.array(center_clumps)).transpose(), (np.array(flat_clumps)).transpose(), np.array([r_flat, theta_flat, phi_flat])
         
