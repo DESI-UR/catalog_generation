@@ -199,7 +199,8 @@ class GeneralTools():
 
     # function to convert spherical coordinates to cartesian coordinates
     def toCartesianVector(self, r, theta, phi):
-        unit_vector = hp.pix2vec(self.nside, hp.ang2pix(self.nside, theta, phi, lonlat=True))
+        #unit_vector = hp.pix2vec(self.nside, hp.ang2pix(self.nside, theta, phi, lonlat=True))
+        unit_vector = hp.ang2vec(theta, phi, lonlat=True)
         curr_vector = r * np.array(unit_vector)
         return curr_vector
         
