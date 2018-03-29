@@ -232,14 +232,14 @@ class GeneralTools():
         hdus = fits.open(filename)
         data = hdus[1].data
         z     = data['z']
-        r     = [self.cosmo.comoving_distance(curr_z) for curr_z in z]
+        r     = [(self.cosmo.comoving_distance(curr_z)).value for curr_z in z]
         theta = data['theta']
         phi   = data['phi']
-        return r, theta, phi
+        return np.array(r), np.array(theta), np.array(phi)
     
     #
     def generate_rim_from_file(self, filename, diagnostics=False):
-        r, theta, phi = read_generated_file(filename)
+        r, theta, phi = self.read_generated_file(filename)
         return self.generate_rim(r, theta, phi, diagnostics)
 
     #
@@ -285,7 +285,7 @@ class GeneralTools():
         return rim_rs, rim_thetas, rim_phis
 
     def generate_clumps_from_file(self, filename, diagnostics=False):
-        r, theta, phi = read_generated_file(filename)
+        r, theta, phi = self.read_generated_file(filename)
         return generate_clumps(r, theta, phi, diagnostics)
     
     def generate_clumps(self, r_centers, theta_centers, phi_centers, diagnostics=False):
@@ -343,16 +343,17 @@ class GeneralTools():
         col_defs = [['phi', 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
         if coordinates == -1:
             coordinates = self.coordinates
+        if coordinates == 1:
+            col2   = (90.-col2)
         use_col_defs = col_defs[coordinates]
-        print(use_col_defs)
         # We also write the output in fits format
         if os.path.isfile(filename):
             print("a file with the designated name already exists... please remove the file first")
             return
         col1 = fits.Column(name=use_col_defs[0], array=col1, format='f8')
         col2 = fits.Column(name=use_col_defs[1], array=col2, format='f8')
-        col3 = fits.Column(name=use_col_defs[2], array=col3,  format='f8')
-        col4 = fits.Column(name=use_col_defs[3], array=col4,  format='f8')
+        col3 = fits.Column(name=use_col_defs[2], array=col3, format='f8')
+        col4 = fits.Column(name=use_col_defs[3], array=col4, format='f8')
         cols = fits.ColDefs([col1, col2, col3, col4])
         hdu  = fits.BinTableHDU.from_columns(cols)
         hdu.writeto(filename)
