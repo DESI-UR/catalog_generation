@@ -107,7 +107,9 @@ class GeneralTools():
             plt.savefig("diagnostics/completeness.pdf")
 
     # generate r values uniformly distributed with (r_min, r_max)
-    def generate_uniform_r(self, num_obs, diagnostics=False):
+    def generate_uniform_r(self, num_obs=None, diagnostics=False):
+        if num_obs == None:
+            num_obs = self.n_center
         flat_r = np.random.uniform(self.template_r_min, self.template_r_max, num_obs)
         # if diagnostics enabled, plot the distribution
         if diagnostics or self.diagnostics:
@@ -124,12 +126,14 @@ class GeneralTools():
     def generate_r(self, nobs, diagnostics=False):
         num_obs = 0
         rlist   = []
-        n, r_edges = np.histogram(self.template_r, bins=int(np.sqrt(self.template_r_len)))
-        n = n.astype(float)
-        weights    = n/np.sum(n)
-        r_med = (r_edges[:-1] + r_edges[1:])/2.
+        n, r_edges  = np.histogram(self.template_r, bins=int(np.sqrt(self.template_r_len)))
+        n           = n.astype(float)
+        weights     = n/np.sum(n)
+        r_med       = (r_edges[:-1] + r_edges[1:])/2.
+        halfbinsize = (r_edges[:-1] - r_edges[1:])
         while num_obs < nobs:
-            curr_r = np.random.choice(r_med, p=weights)
+            curr_r_center = np.random.choice(r_med, p=weights)
+            curr_r        = np.random.uniform(r_med-halfbinsize, r_med+halfbinsize)
             rlist.append(curr_r)
             num_obs += 1
         rlist = np.array(rlist)
@@ -146,15 +150,21 @@ class GeneralTools():
                 os.makedirs("diagnostics")
     
     def generate_uniform_angular_position(self, nobs, diagnostics=False):
-        num_obs = 0
-        pixlist = []
-        weights = self.completeness/np.sum(self.completeness)
-        pix_idx = np.arange(self.completeness_len)
+        num_obs  = 0
+        thetas   = []
+        phis     = []
+        pixels   = []
+        weights  = self.completeness/np.sum(self.completeness)
+        pix_idx  = np.arange(self.completeness_len)
         while num_obs < nobs:
-            curr_pix = np.random.choice(pix_idx, p=weights)
-            pixlist.append(curr_pix)
-            num_obs += 1
-        angles = hp.pix2ang(ipix=np.array(pixlist), nside=self.nside, lonlat=True)
+            curr_theta = np.random.uniform(0., 360., 1)
+            curr_phi   = np.random.uniform(-90., 90., 1)
+            curr_pix   = hp.ang2pix(self.nside, curr_theta, curr_phi, lonlat=True)
+            if self.completeness[curr_pix] == 1:
+                thetas.append(curr_theta)
+                phis.append(curr_phi)
+                pixels.append(curr_pix)
+                num_obs += 1
         # plot the distribution for diagnostics
         if diagnostics or self.diagnostics:
             # completeness plot
@@ -166,18 +176,17 @@ class GeneralTools():
             plt.savefig("diagnostics/generated_completeness.pdf")
             # theta distribution
             plt.clf()
-            print(angles[0])
-            plt.hist(angles[0], bins=int(np.sqrt(self.completeness_len)))
+            plt.hist(thetas, bins=int(np.sqrt(self.completeness_len)))
             plt.title(r"$\theta$ distribution")
             plt.xlabel(r'$\theta$ [deg]')
             plt.savefig("diagnostics/generated_theta_dist.pdf")
             # theta distribution
             plt.clf()
-            plt.hist(angles[1], bins=int(np.sqrt(self.completeness_len)))
+            plt.hist(phis, bins=int(np.sqrt(self.completeness_len)))
             plt.title(r"$\phi$ distribution")
             plt.xlabel(r'$\phi$ [deg]')
             plt.savefig("diagnostics/generated_phi_dist.pdf")
-        return angles
+        return [np.array(thetas), np.array(phis)]
             
     # generate gaussian distributed r values
     def generate_gaussian(self, mu, sig, nobs):
@@ -219,8 +228,22 @@ class GeneralTools():
         # it is not intended for general use but specific to this project
         return sumvec
 
+    def read_generated_file(self, filename):
+        hdus = fits.open(filename)
+        data = hdus[1].data
+        z     = data['z']
+        r     = [self.cosmo.comoving_distance(curr_z) for curr_z in z]
+        theta = data['theta']
+        phi   = data['phi']
+        return r, theta, phi
+    
     #
-    def generate_rim(self, r, theta, phi):
+    def generate_rim_from_file(self, filename, diagnostics=False):
+        r, theta, phi = read_generated_file(filename)
+        return self.generate_rim(r, theta, phi, diagnostics)
+
+    #
+    def generate_rim(self, r, theta, phi, diagnostics=False):
         rim_rs     = []
         rim_thetas = []
         rim_phis   = []
@@ -243,8 +266,28 @@ class GeneralTools():
         rim_rs = np.array(rim_rs).flatten()
         rim_thetas = np.array(rim_thetas).flatten()
         rim_phis = np.array(rim_phis).flatten()
+        if diagnostics or self.diagnostics:
+            self.check_diagnostics_directory()
+            plt.hist(rim_rs)
+            plt.xlabel(r"r [Mpc]")
+            plt.title("Rim Galaxy")
+            plt.savefig("diagnostics/generated_rim_r.pdf")
+
+            plt.hist(rim_thetas)
+            plt.xlabel(r"$\theta$ [deg]")
+            plt.title("Rim Galaxy")
+            plt.savefig("diagnostics/generated_rim_theta.pdf")
+
+            plt.hist(rim_phis)
+            plt.xlabel(r"$\phi$ [deg]")
+            plt.title("Rim Galaxy")
+            plt.savefig("diagnostics/generated_rim_phi.pdf")
         return rim_rs, rim_thetas, rim_phis
 
+    def generate_clumps_from_file(self, filename, diagnostics=False):
+        r, theta, phi = read_generated_file(filename)
+        return generate_clumps(r, theta, phi, diagnostics)
+    
     def generate_clumps(self, r_centers, theta_centers, phi_centers, diagnostics=False):
         # generate a list to choose among the centers and flats
         galaxy_selection  = np.random.randint(0, 2, self.nr_clump)
@@ -292,11 +335,16 @@ class GeneralTools():
                 if self.completeness[pixel] > 0:
                     flat_clumps.append(curr_clump)        
         return (np.array(center_clumps)).transpose(), (np.array(flat_clumps)).transpose(), np.array([r_flat, theta_flat, phi_flat])
-        
-    def write_to_fits(self, col1, col2, col3, col4, filename):
-        col_defs = [['phi' 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
-        print(self.coordinates)
-        use_col_defs = col_defs[self.coordinates]
+
+    def r2z(self, r):
+        return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
+    
+    def write_to_fits(self, col1, col2, col3, col4, filename, coordinates=0):
+        col_defs = [['phi', 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
+        if coordinates == -1:
+            coordinates = self.coordinates
+        use_col_defs = col_defs[coordinates]
+        print(use_col_defs)
         # We also write the output in fits format
         if os.path.isfile(filename):
             print("a file with the designated name already exists... please remove the file first")
