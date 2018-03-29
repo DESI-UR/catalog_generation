@@ -26,7 +26,19 @@ DEG2RAD = np.pi/180.0
 RAD2DEG = 1./DEG2RAD
 
 class GeneralTools():
-    
+    """
+    Initialize the tools using a configuration file
+
+    Parameters
+    -----------
+    configFile : string
+        The configuration filename with the parameters to use
+
+    Returns
+    -------
+    None
+
+    """
     def __init__(self, configFile, diagnostics=False):
         """
         COMMENTS HERE
@@ -37,10 +49,33 @@ class GeneralTools():
         self.get_template()
         self.get_mask()
 
+    """
+    Function to change the diagnostics level. Even though it can be set during initialization, this
+    function makes it possible to change the diagnostics during operation
 
+    Parameters
+    ----------
+    diagnostics : boolean
+
+    Returns
+    -------
+    None
+    """
     def setDiagnostics(self, diagnostics):
         self.diagnostics = diagnostics
         
+
+    """
+    Function to set the parameters of the object using the configuration file.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+    """
     def getConfig(self):
         self.config     = configparser.RawConfigParser()
         self.config.read(self.config_file)
@@ -83,7 +118,18 @@ class GeneralTools():
             self.z_lo       = 0.4
             self.z_hi       = 0.7
 
-    # read the template to use for the mock and random catalogs
+
+    """
+    Function to read the template r distribution for mock and random generation
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+    """
     def get_template(self):
         self.hdulist      = fits.open(self.datafile)
         self.data_z       = self.hdulist[1].data['Z']
@@ -94,6 +140,17 @@ class GeneralTools():
         self.template_r_min = np.amin(self.template_r)
         self.template_r_max = np.amax(self.template_r)
 
+    """
+    Function to read the completeness map for mock and random generation
+
+    Parameters
+    ----------
+    diagnostics : boolean
+
+    Returns
+    -------
+    None
+    """
     # read the mask/completeness for the output
     def get_mask(self, diagnostics=False):
         self.mask             = np.load(self.ang_mask)
@@ -286,7 +343,7 @@ class GeneralTools():
 
     def generate_clumps_from_file(self, filename, diagnostics=False):
         r, theta, phi = self.read_generated_file(filename)
-        return generate_clumps(r, theta, phi, diagnostics)
+        return self.generate_clumps(r, theta, phi, diagnostics)
     
     def generate_clumps(self, r_centers, theta_centers, phi_centers, diagnostics=False):
         # generate a list to choose among the centers and flats
@@ -333,8 +390,9 @@ class GeneralTools():
                                              np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
                 pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
                 if self.completeness[pixel] > 0:
-                    flat_clumps.append(curr_clump)        
-        return (np.array(center_clumps)).transpose(), (np.array(flat_clumps)).transpose(), np.array([r_flat, theta_flat, phi_flat])
+                    flat_clumps.append(curr_clump)
+        print(theta_flat)
+        return (np.array(center_clumps)).transpose(), (np.array(flat_clumps)).transpose(), [r_flat, theta_flat, phi_flat]
 
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
