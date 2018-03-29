@@ -130,10 +130,10 @@ class GeneralTools():
         n           = n.astype(float)
         weights     = n/np.sum(n)
         r_med       = (r_edges[:-1] + r_edges[1:])/2.
-        halfbinsize = (r_edges[:-1] - r_edges[1:])
+        halfbinsize = (r_edges[1] - r_edges[0])/2.
         while num_obs < nobs:
             curr_r_center = np.random.choice(r_med, p=weights)
-            curr_r        = np.random.uniform(r_med-halfbinsize, r_med+halfbinsize)
+            curr_r        = np.random.uniform(curr_r_center-halfbinsize, curr_r_center+halfbinsize)
             rlist.append(curr_r)
             num_obs += 1
         rlist = np.array(rlist)
@@ -272,12 +272,12 @@ class GeneralTools():
             plt.xlabel(r"r [Mpc]")
             plt.title("Rim Galaxy")
             plt.savefig("diagnostics/generated_rim_r.pdf")
-
+            plt.clf()
             plt.hist(rim_thetas)
             plt.xlabel(r"$\theta$ [deg]")
             plt.title("Rim Galaxy")
             plt.savefig("diagnostics/generated_rim_theta.pdf")
-
+            plt.clf()
             plt.hist(rim_phis)
             plt.xlabel(r"$\phi$ [deg]")
             plt.title("Rim Galaxy")
