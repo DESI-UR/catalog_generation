@@ -259,13 +259,13 @@ class GeneralTools():
                 pixel      = hp.ang2pix(self.nside, curr_rim[1], curr_rim[2], lonlat=True)
                 # this is the acceptance.
                 if self.completeness[pixel] > 0:
-                    rim_rs.append(curr_rim[0])
-                    rim_thetas.append(curr_rim[1])
-                    rim_phis.append(curr_rim[2])
+                    rim_rs.extend(curr_rim[0])
+                    rim_thetas.extend(curr_rim[1])
+                    rim_phis.extend(curr_rim[2])
                     curr_rim_cnt += 1
-        rim_rs = np.array(rim_rs).flatten()
-        rim_thetas = np.array(rim_thetas).flatten()
-        rim_phis = np.array(rim_phis).flatten()
+        rim_rs = np.array(rim_rs)
+        rim_thetas = np.array(rim_thetas)
+        rim_phis = np.array(rim_phis)
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             plt.hist(rim_rs)
@@ -296,8 +296,8 @@ class GeneralTools():
         # generate flat galaxies (will be returned and be added to the mocks later)
         r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
         # randomly choose indices from centers and flat for the clumps
-        rand_center_idx = np.random.randint(0, len(r_centers), num_center_clumps)
-        rand_flat_idx   = np.random.randint(0, len(r_flat),    num_flat_clumps)
+        rand_center_idx = np.random.choice(len(r_centers), num_center_clumps)
+        rand_flat_idx   = np.random.choice(len(r_flat),    num_flat_clumps)
         selected_r_centers     = r_centers[rand_center_idx]
         selected_theta_centers = theta_centers[rand_center_idx]
         selected_phi_centers   = phi_centers[rand_center_idx]
