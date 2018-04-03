@@ -18,6 +18,7 @@ import astropy.units as u
 import sys
 from ROOT import TFile, TTree, gROOT
 import os
+from scipy.interpolate import interp1d
 
 NSIDE = -1
 fbool = False
@@ -205,7 +206,34 @@ class GeneralTools():
     def check_diagnostics_directory(self):
         if not os.path.isdir("diagnostics"):
                 os.makedirs("diagnostics")
+
+    """
+    Function that return the indices of the r values that passes
+    the acceptance test
     
+    """
+    def check_radial_acceptance(self, r_test):
+        num_bins     = int(np.sqrt(self.template_r_len))
+        n, r_edges   = np.histogram(self.template_r, bins=num_bins)
+        n            = n.astype(float)
+        weights      = n/np.sum(n)
+        r_med        = (r_edges[:-1] + r_edges[1:])/2.
+        halfbinsize  = (r_edges[1] - r_edges[0])/2.
+        interpolator = interp1d(r_med, weights)
+
+        num_r_test           = len(r_test)
+        n_test, r_test_edges = np.histogram(r_test, bins=num_bins)
+        n_test               = n_test.astype(float)
+        weights_test         = n_test/np.sum(n_test)
+        r_test_med           = (r_test_edges[:-1] + r_test_edges[1:])/2.
+        interpolator_test    = interp1d(r_test_med, weights_med)
+
+        p1  = interpolator(r_test)
+        p2  = interpolator_test(r_test)
+        acc = [np.random.uniform(0, p) for p in p2]
+                
+        return p1>acc
+                
     def generate_uniform_angular_position(self, nobs, diagnostics=False):
         num_obs  = 0
         thetas   = []
@@ -314,15 +342,20 @@ class GeneralTools():
                 curr_rim   = self.addVectors(np.array([r[i], theta[i], phi[i]]),
                                              np.array([curr_r[0], curr_theta[0], curr_phi[0]]))
                 pixel      = hp.ang2pix(self.nside, curr_rim[1], curr_rim[2], lonlat=True)
-                # this is the acceptance.
+                # apply angular acceptance.
                 if self.completeness[pixel] > 0:
                     rim_rs.append(curr_rim[0])
                     rim_thetas.append(curr_rim[1])
                     rim_phis.append(curr_rim[2])
                     curr_rim_cnt += 1
-        rim_rs = np.array(rim_rs).flatten()
-        rim_thetas = np.array(rim_thetas).flatten()
-        rim_phis = np.array(rim_phis).flatten()
+        rim_rs       = np.array(rim_rs).flatten()
+        rim_thetas   = np.array(rim_thetas).flatten()
+        rim_phis     = np.array(rim_phis).flatten()
+        # apply radial acceptance
+        r_acceptance = self.check_radial_acceptance(rim_rs)
+        rim_rs       = rim_rs[r_acceptance]
+        rim_thetas   = rim_thetas[r_acceptance]
+        rim_phis     = rim_phis[r_acceptance]
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             plt.hist(rim_rs)
@@ -374,6 +407,7 @@ class GeneralTools():
                 curr_clump = self.addVectors(np.array([curr_r_center, curr_theta_center, curr_phi_center]),
                                              np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
                 pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
+                # apply angular acceptance
                 if self.completeness[pixel] > 0:
                     center_clumps.append(curr_clump)
         # generate the clump positions with respect to their origin (a flat galaxu)
@@ -389,9 +423,9 @@ class GeneralTools():
                 curr_clump = self.addVectors(np.array([curr_r_flat, curr_theta_flat, curr_phi_flat]),
                                              np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
                 pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
+                # apply angular acceptance
                 if self.completeness[pixel] > 0:
                     flat_clumps.append(curr_clump)
-        print(theta_flat)
         return (np.array(center_clumps)).transpose(), (np.array(flat_clumps)).transpose(), [r_flat, theta_flat, phi_flat]
 
     def r2z(self, r):
