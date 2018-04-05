@@ -395,7 +395,9 @@ class GeneralTools():
         selected_theta_flats   = theta_flat[rand_flat_idx]
         selected_phi_flats     = phi_flat[rand_flat_idx]
         # generate the clump positions with respect to their origin (a center galaxu)
-        center_clumps  = []
+        center_clump_rs     = []
+        center_clump_thetas = []
+        center_clump_phis   = []
         for i in range(num_center_clumps):
             curr_r_center     = selected_r_centers[i]
             curr_theta_center = selected_theta_centers[i]
@@ -409,9 +411,21 @@ class GeneralTools():
                 pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
                 # apply angular acceptance
                 if self.completeness[pixel] > 0:
-                    center_clumps.append(curr_clump)
+                    center_clump_rs.append(curr_clump[0])
+                    center_clump_thetas.append(curr_clump[1])
+                    center_clump_phis.append(curr_clump[2])
+        center_clump_rs     = np.array(center_clump_rs)
+        center_clump_thetas = np.array(center_clump_thetas)
+        center_clump_phis   = np.array(center_clump_phis)
+        # apply radial acceptance
+        r_acceptance = self.check_radial_acceptance(center_clump_rs)
+        center_clump_rs     = center_clump_rs[r_acceptance]
+        center_clump_thetas = center_clump_thetas[r_acceptance]
+        center_clump_phis   = center_clump_phis[r_acceptance]
         # generate the clump positions with respect to their origin (a flat galaxu)
-        flat_clumps    = []
+        flat_clump_rs     = []
+        flat_clump_thetas = []
+        flat_clump_phis   = []
         for i in range(num_flat_clumps):
             curr_r_flat     = selected_r_flats[i]
             curr_theta_flat = selected_theta_flats[i]
@@ -425,8 +439,18 @@ class GeneralTools():
                 pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
                 # apply angular acceptance
                 if self.completeness[pixel] > 0:
-                    flat_clumps.append(curr_clump)
-        return (np.array(center_clumps)).transpose(), (np.array(flat_clumps)).transpose(), [r_flat, theta_flat, phi_flat]
+                    flat_clump_rs.append(curr_clump[0])
+                    flat_clump_thetas.append(curr_clump[1])
+                    flat_clump_phis.append(curr_clump[2])
+        flat_clump_rs     = np.array(flat_clump_rs)
+        flat_clump_thetas = np.array(flat_clump_thetas)
+        flat_clump_phis   = np.array(flat_clump_phis)
+        # apply radial acceptance
+        r_acceptance = self.check_radial_acceptance(flat_clump_rs)
+        flat_clump_rs     = flat_clump_rs[r_acceptance]
+        flat_clump_thetas = flat_clump_thetas[r_acceptance]
+        flat_clump_phis   = flat_clump_phis[r_acceptance]
+        return [center_clump_rs, center_clump_thatas, center_clump_phis],[flat_clump_rs, flat_clump_thetas, flat_clump_phis],[r_flat, theta_flat, phi_flat]
 
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
