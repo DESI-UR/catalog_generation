@@ -219,14 +219,14 @@ class GeneralTools():
         weights      = n/np.sum(n)
         r_med        = (r_edges[:-1] + r_edges[1:])/2.
         halfbinsize  = (r_edges[1] - r_edges[0])/2.
-        interpolator = interp1d(r_med, weights)
+        interpolator = interp1d(r_med, weights, fill_value='extrapolate')
 
         num_r_test           = len(r_test)
         n_test, r_test_edges = np.histogram(r_test, bins=num_bins)
         n_test               = n_test.astype(float)
         weights_test         = n_test/np.sum(n_test)
         r_test_med           = (r_test_edges[:-1] + r_test_edges[1:])/2.
-        interpolator_test    = interp1d(r_test_med, weights_med)
+        interpolator_test    = interp1d(r_test_med, weights_test, fill_value='extrapolate')
 
         p1  = interpolator(r_test)
         p2  = interpolator_test(r_test)
@@ -450,7 +450,7 @@ class GeneralTools():
         flat_clump_rs     = flat_clump_rs[r_acceptance]
         flat_clump_thetas = flat_clump_thetas[r_acceptance]
         flat_clump_phis   = flat_clump_phis[r_acceptance]
-        return [center_clump_rs, center_clump_thatas, center_clump_phis],[flat_clump_rs, flat_clump_thetas, flat_clump_phis],[r_flat, theta_flat, phi_flat]
+        return [center_clump_rs, center_clump_thetas, center_clump_phis],[flat_clump_rs, flat_clump_thetas, flat_clump_phis],[r_flat, theta_flat, phi_flat]
 
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
