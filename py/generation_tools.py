@@ -1,6 +1,6 @@
 """
 Nodules to generate random and mock catalogs
-
+OB
 Contributors: Dylan and Tolga
 """
 
@@ -86,9 +86,15 @@ class GeneralTools():
         self.num_mock   = int(self.config.get("N Catalogs", "nmock"))
         
         # read in the cosmology parameters to generate the mocks
-        self.H0       = float(self.config.get("Cosmology", "H_0"))
-        self.omega_m0 = float(self.config.get("Cosmology", "omega_m"))
-        self.cosmo        = FlatLambdaCDM(self.H0, self.omega_m0)
+        self.H0        = float(self.config.get("Cosmology", "H_0"))
+        self.omega_m0  = float(self.config.get("Cosmology", "omega_m0"))
+        self.omega_b0  = float(self.config.get("Cosmology", "omega_b0"))
+        self.omega_de0 = float(self.config.get("Cosmology", "omega_de0"))
+        self.temp_cmb  = float(self.config.get("Cosmology", "T_cmb"))
+        self.nu_eff    = float(self.config.get("Cosmology", "nu_eff"))
+        self.m_nu      = np.array(self.config.get("Cosmology", "m_nu").split(","), dtype=float)
+        self.cosmo     = FlatLambdaCDM(name="Custom Cosmology", H0=self.H0, Om0=self.omega_m0, Ob0=self.omega_b0,
+                                       Tcmb0=self.temp_cmb, Neff=self.nu_eff, m_nu=self.m_nu*u.eV)
         
         # output filenames
         self.fname_random = self.config.get("File Names", "randout")
@@ -140,7 +146,7 @@ class GeneralTools():
         self.template_r_len = len(self.template_r)
         self.template_r_min = np.amin(self.template_r)
         self.template_r_max = np.amax(self.template_r)
-
+        
     """
     Function to read the completeness map for mock and random generation
 
@@ -219,14 +225,14 @@ class GeneralTools():
         weights      = n/np.sum(n)
         r_med        = (r_edges[:-1] + r_edges[1:])/2.
         halfbinsize  = (r_edges[1] - r_edges[0])/2.
-        interpolator = interp1d(r_med, weights, fill_value='extrapolate')
+        interpolator = interp1d(r_med, weights, bounds_error=False, fill_value=0.)#'extrapolate')
 
         num_r_test           = len(r_test)
         n_test, r_test_edges = np.histogram(r_test, bins=num_bins)
         n_test               = n_test.astype(float)
         weights_test         = n_test/np.sum(n_test)
         r_test_med           = (r_test_edges[:-1] + r_test_edges[1:])/2.
-        interpolator_test    = interp1d(r_test_med, weights_test, fill_value='extrapolate')
+        interpolator_test    = interp1d(r_test_med, weights_test, bounds_error=False, fill_value=0.)#'extrapolate')
 
         p1  = interpolator(r_test)
         p2  = interpolator_test(r_test)
@@ -454,8 +460,8 @@ class GeneralTools():
 
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
-    
-    def write_to_fits(self, col1, col2, col3, col4, filename, coordinates=0):
+
+    def write_to_fits(self, col1, col2, col3, col4, col5, filename, coordinates=0):
         col_defs = [['phi', 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
         if coordinates == -1:
             coordinates = self.coordinates
@@ -466,10 +472,25 @@ class GeneralTools():
         if os.path.isfile(filename):
             print("a file with the designated name already exists... please remove the file first")
             return
+        header = fits.Header()
+        header['H_0']         = self.H0
+        header['omega_m0']    = self.omega_m0
+        header['r_BAO']       = self.r_BAO
+        header['sig_r_BAO']   = self.sigma_r_BAO
+        header['gamma']       = self.gamma
+        header['r_0']         = self.r_0
+        header['n_rnd']       = self.n_rnd
+        header['n_center']    = self.n_center
+        header['n_rim']       = self.n_rim
+        header['n_flat']      = self.n_flat
+        header['nr_cl']       = self.nr_clump
+        header['n_cl']        = self.n_clump
+        header['n_cl_center'] = self.n_clump_center
         col1 = fits.Column(name=use_col_defs[0], array=col1, format='f8')
         col2 = fits.Column(name=use_col_defs[1], array=col2, format='f8')
         col3 = fits.Column(name=use_col_defs[2], array=col3, format='f8')
         col4 = fits.Column(name=use_col_defs[3], array=col4, format='f8')
-        cols = fits.ColDefs([col1, col2, col3, col4])
-        hdu  = fits.BinTableHDU.from_columns(cols)
+        col5 = fits.Column(name="TYPE", array=col5, format='f8')
+        cols = fits.ColDefs([col1, col2, col3, col4, col5])
+        hdu  = fits.BinTableHDU.from_columns(cols, header=header)
         hdu.writeto(filename)
