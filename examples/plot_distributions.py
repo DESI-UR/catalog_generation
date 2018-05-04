@@ -29,9 +29,6 @@ print("Number of center clump galaxies: {}".format(len(center_clumps)))
 print("Number of flat clump   galaxies: {}".format(len(flat_clumps)))
 print("Number of              galaxies: {}".format(len(centers)+len(rims)+len(flats)+len(center_clumps)+len(flat_clumps)))
 
-plt.plot(centers['z'], 'o')
-plt.show()
-
 plt.figure(1, figsize=(16,8))
 
 try:
