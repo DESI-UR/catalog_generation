@@ -16,7 +16,6 @@ from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM, z_at_value
 import astropy.units as u
 import sys
-from ROOT import TFile, TTree, gROOT
 import os
 from scipy.interpolate import interp1d
 
@@ -40,11 +39,12 @@ class GeneralTools():
     None
 
     """
-    def __init__(self, configFile, diagnostics=False):
+    def __init__(self, configFile, diagnostics=False, acceptance=True):
         """
         COMMENTS HERE
         """
         self.diagnostics = diagnostics
+        self.acceptance  = acceptance
         self.config_file = configFile
         self.getConfig()
         self.get_template()
@@ -124,7 +124,47 @@ class GeneralTools():
             print("using predefined z bounds")
             self.z_lo       = 0.4
             self.z_hi       = 0.7
+        self.r_hi       = self.cosmo.comoving_distance(self.z_hi).value
+        self.r_lo       = self.cosmo.comoving_distance(self.z_lo).value
 
+
+    """
+    Function to generate a lookup table for z to r conversion
+    
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+    """
+    def generate_LUT_z2r(self):
+        z_min = self.template_z.min()
+        z_max = self.template_z.max()
+        zs = np.linspace(z_min-0.5, z_max+1., 1000)
+        rs = [r.value for r in self.cosmo.comoving_distance(zs)]
+        interpolator = interp1d(zs, rs, bounds_error=False, fill_value=-1.)
+        return interpolator
+
+    """
+    Function to generate a lookup table for r to z conversion
+    
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+    """
+    def generate_LUT_r2z(self):
+        z_min = self.template_z.min()
+        z_max = self.template_z.max()
+        zs = np.linspace(z_min-0.5, z_max+1., 1000)
+        rs = [r.value for r in self.cosmo.comoving_distance(zs)]
+        interpolator = interp1d(rs, zs, bounds_error=False, fill_value=-1.)
+        return interpolator            
 
     """
     Function to read the template r distribution for mock and random generation
@@ -140,12 +180,13 @@ class GeneralTools():
     def get_template(self):
         self.hdulist      = fits.open(self.datafile)
         self.data_z       = self.hdulist[1].data['Z']
-        template_cut = np.array([(self.data_z[i] < self.z_hi) and (self.data_z[i] > self.z_lo) for i in range(len(self.data_z))])
+        template_cut = np.array([(self.data_z[i] < self.z_hi+0.5) and (self.data_z[i] > self.z_lo) for i in range(len(self.data_z))])
         self.template_z   = self.data_z[template_cut]
         self.template_r   = [r.value for r in self.cosmo.comoving_distance(self.template_z)]
         self.template_r_len = len(self.template_r)
         self.template_r_min = np.amin(self.template_r)
         self.template_r_max = np.amax(self.template_r)
+
         
     """
     Function to read the completeness map for mock and random generation
@@ -158,7 +199,6 @@ class GeneralTools():
     -------
     None
     """
-    # read the mask/completeness for the output
     def get_mask(self, diagnostics=False):
         self.mask             = np.load(self.ang_mask)
         self.completeness     = self.mask.f.CMPLTNSS
@@ -217,28 +257,88 @@ class GeneralTools():
     Function that return the indices of the r values that passes
     the acceptance test
     
+    Parameters
+    ----------
+    r_test: double
+        r values to be test for acceptance
+
+    Returns
+    -------
+    boolean array
+        a boolean array which has True values for the r values that passed the acceptance test
+        and False values for the r values that did not pass the acceptance test
+    
     """
     def check_radial_acceptance(self, r_test):
-        num_bins     = int(np.sqrt(self.template_r_len))
-        n, r_edges   = np.histogram(self.template_r, bins=num_bins)
+        template_r   = np.array(self.template_r)
+        template_r   = template_r[template_r<=self.r_hi]
+        num_bins     = int(np.sqrt(len(template_r)))
+        n, r_edges   = np.histogram(template_r, bins=num_bins)
         n            = n.astype(float)
         weights      = n/np.sum(n)
         r_med        = (r_edges[:-1] + r_edges[1:])/2.
         halfbinsize  = (r_edges[1] - r_edges[0])/2.
-        interpolator = interp1d(r_med, weights, bounds_error=False, fill_value=0.)#'extrapolate')
+        interpolator = interp1d(r_med, weights, bounds_error=False, fill_value=0.)
 
         num_r_test           = len(r_test)
-        n_test, r_test_edges = np.histogram(r_test, bins=num_bins)
+        n_test, r_test_edges = np.histogram(r_test, bins=int(np.sqrt(num_r_test)))
         n_test               = n_test.astype(float)
         weights_test         = n_test/np.sum(n_test)
         r_test_med           = (r_test_edges[:-1] + r_test_edges[1:])/2.
-        interpolator_test    = interp1d(r_test_med, weights_test, bounds_error=False, fill_value=0.)#'extrapolate')
+        interpolator_test    = interp1d(r_test_med, weights_test, bounds_error=False, fill_value=0.)
 
         p1  = interpolator(r_test)
         p2  = interpolator_test(r_test)
         acc = [np.random.uniform(0, p) for p in p2]
-                
-        return p1>acc
+
+        if self.acceptance:
+            return p1>acc
+        else:
+            return np.full(len(p1), True)
+
+    """
+    Function that return the indices of the z values that passes
+    the acceptance test
+    
+    Parameters
+    ----------
+    z_test: double
+        z values to be test for acceptance
+
+    Returns
+    -------
+    boolean array
+        a boolean array which has True values for the z values that passed the acceptance test
+        and False values for the r values that did not pass the acceptance test
+    
+    """
+    def check_z_acceptance(self, z_test):
+        template_z   = np.array(self.template_z)
+        template_z   = template_z[template_z<=self.z_hi]
+        template_z   = template_z[template_z>=self.z_lo]
+        num_bins     = int(np.sqrt(len(template_z)))
+        n, z_edges   = np.histogram(template_z, bins=num_bins)
+        n            = n.astype(float)
+        weights      = n/np.sum(n)
+        z_med        = (z_edges[:-1] + z_edges[1:])/2.
+        halfbinsize  = (z_edges[1] - z_edges[0])/2.
+        interpolator = interp1d(z_med, weights, bounds_error=False, fill_value=0.)
+
+        num_z_test           = len(z_test)
+        n_test, z_test_edges = np.histogram(z_test, bins=int(np.sqrt(num_z_test)))
+        n_test               = n_test.astype(float)
+        weights_test         = n_test/np.sum(n_test)
+        z_test_med           = (z_test_edges[:-1] + z_test_edges[1:])/2.
+        interpolator_test    = interp1d(z_test_med, weights_test, bounds_error=False, fill_value=0.)
+
+        p1  = interpolator(z_test)
+        p2  = interpolator_test(z_test)
+        acc = [np.random.uniform(0, p) for p in p2]
+
+        if self.acceptance:
+            return p1>acc
+        else:
+            return np.full(len(p1), True)
                 
     def generate_uniform_angular_position(self, nobs, diagnostics=False):
         num_obs  = 0
@@ -297,6 +397,10 @@ class GeneralTools():
         angles_list = self.generate_uniform_angular_position(num_obs)
         return r_list, angles_list[0], angles_list[1]
 
+    def generate_center_galaxies(self):
+        r_center, theta_center, phi_center = self.generate_galaxies(self.n_center)
+        return r_center, theta_center, phi_center
+        
     # function to convert spherical coordinates to cartesian coordinates
     def toCartesianVector(self, r, theta, phi):
         #unit_vector = hp.pix2vec(self.nside, hp.ang2pix(self.nside, theta, phi, lonlat=True))
@@ -357,11 +461,6 @@ class GeneralTools():
         rim_rs       = np.array(rim_rs).flatten()
         rim_thetas   = np.array(rim_thetas).flatten()
         rim_phis     = np.array(rim_phis).flatten()
-        # apply radial acceptance
-        r_acceptance = self.check_radial_acceptance(rim_rs)
-        rim_rs       = rim_rs[r_acceptance]
-        rim_thetas   = rim_thetas[r_acceptance]
-        rim_phis     = rim_phis[r_acceptance]
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             plt.hist(rim_rs)
@@ -423,12 +522,7 @@ class GeneralTools():
         center_clump_rs     = np.array(center_clump_rs)
         center_clump_thetas = np.array(center_clump_thetas)
         center_clump_phis   = np.array(center_clump_phis)
-        # apply radial acceptance
-        r_acceptance = self.check_radial_acceptance(center_clump_rs)
-        center_clump_rs     = center_clump_rs[r_acceptance]
-        center_clump_thetas = center_clump_thetas[r_acceptance]
-        center_clump_phis   = center_clump_phis[r_acceptance]
-        # generate the clump positions with respect to their origin (a flat galaxu)
+        # generate the clump positions with respect to their origin (a flat galaxy)
         flat_clump_rs     = []
         flat_clump_thetas = []
         flat_clump_phis   = []
@@ -451,11 +545,6 @@ class GeneralTools():
         flat_clump_rs     = np.array(flat_clump_rs)
         flat_clump_thetas = np.array(flat_clump_thetas)
         flat_clump_phis   = np.array(flat_clump_phis)
-        # apply radial acceptance
-        r_acceptance = self.check_radial_acceptance(flat_clump_rs)
-        flat_clump_rs     = flat_clump_rs[r_acceptance]
-        flat_clump_thetas = flat_clump_thetas[r_acceptance]
-        flat_clump_phis   = flat_clump_phis[r_acceptance]
         return [center_clump_rs, center_clump_thetas, center_clump_phis],[flat_clump_rs, flat_clump_thetas, flat_clump_phis],[r_flat, theta_flat, phi_flat]
 
     def r2z(self, r):
@@ -486,11 +575,11 @@ class GeneralTools():
         header['nr_cl']       = self.nr_clump
         header['n_cl']        = self.n_clump
         header['n_cl_center'] = self.n_clump_center
-        col1 = fits.Column(name=use_col_defs[0], array=col1, format='f8')
-        col2 = fits.Column(name=use_col_defs[1], array=col2, format='f8')
-        col3 = fits.Column(name=use_col_defs[2], array=col3, format='f8')
-        col4 = fits.Column(name=use_col_defs[3], array=col4, format='f8')
-        col5 = fits.Column(name="TYPE", array=col5, format='f8')
+        col1 = fits.Column(name=use_col_defs[0], array=col1, format='E')
+        col2 = fits.Column(name=use_col_defs[1], array=col2, format='E')
+        col3 = fits.Column(name=use_col_defs[2], array=col3, format='E')
+        col4 = fits.Column(name=use_col_defs[3], array=col4, format='E')
+        col5 = fits.Column(name="TYPE", array=col5, format='J')
         cols = fits.ColDefs([col1, col2, col3, col4, col5])
         hdu  = fits.BinTableHDU.from_columns(cols, header=header)
         hdu.writeto(filename)
