@@ -142,7 +142,7 @@ class GeneralTools():
     def generate_LUT_z2r(self):
         z_min = self.template_z.min()
         z_max = self.template_z.max()
-        zs = np.linspace(z_min-0.5, z_max+1., 1000)
+        zs = np.linspace(z_min, z_max+.15, 1000)
         rs = [r.value for r in self.cosmo.comoving_distance(zs)]
         interpolator = interp1d(zs, rs, bounds_error=False, fill_value=-1.)
         return interpolator
@@ -161,7 +161,7 @@ class GeneralTools():
     def generate_LUT_r2z(self):
         z_min = self.template_z.min()
         z_max = self.template_z.max()
-        zs = np.linspace(z_min-0.5, z_max+1., 1000)
+        zs = np.linspace(z_min, z_max+.15, 1000)
         rs = [r.value for r in self.cosmo.comoving_distance(zs)]
         interpolator = interp1d(rs, zs, bounds_error=False, fill_value=-1.)
         return interpolator            
@@ -180,7 +180,7 @@ class GeneralTools():
     def get_template(self):
         self.hdulist      = fits.open(self.datafile)
         self.data_z       = self.hdulist[1].data['Z']
-        template_cut = np.array([(self.data_z[i] < self.z_hi+0.5) and (self.data_z[i] > self.z_lo) for i in range(len(self.data_z))])
+        template_cut = np.array([(self.data_z[i] < self.z_hi+0.125) and (self.data_z[i] > self.z_lo) for i in range(len(self.data_z))])
         self.template_z   = self.data_z[template_cut]
         self.template_r   = [r.value for r in self.cosmo.comoving_distance(self.template_z)]
         self.template_r_len = len(self.template_r)
