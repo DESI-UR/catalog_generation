@@ -494,7 +494,7 @@ class GeneralTools():
     
     def generate_clumps(self, r_centers, theta_centers, phi_centers, diagnostics=False):
         # generate a list to choose among the centers and flats
-        galaxy_selection  = np.random.choice([0, 1], weights=[1./len(r_center), (1.-1./len(r_center))], k=self.nr_clump)
+        galaxy_selection  = np.random.choice([0, 1], weights=[1./len(r_centers), (1.-1./len(r_centers))], k=self.nr_clump)
         num_center_clumps = len(galaxy_selection[galaxy_selection==0])
         num_flat_clumps   = len(galaxy_selection[galaxy_selection==1])
         # generate flat galaxies (will be returned and be added to the mocks later)
