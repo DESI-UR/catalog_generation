@@ -358,6 +358,7 @@ class GeneralTools():
                 num_obs += 1
         # plot the distribution for diagnostics
         if diagnostics or self.diagnostics:
+            self.check_diagnostics_directory()
             # completeness plot
             plt.clf()
             pixels = np.zeros([12*self.nside**2])
@@ -442,6 +443,7 @@ class GeneralTools():
         rim_rs     = []
         rim_thetas = []
         rim_phis   = []
+        distances  = [] 
         len_n_center = len(r)
         for i in range(len_n_center):
             curr_rim_cnt = 0
@@ -457,7 +459,14 @@ class GeneralTools():
                     rim_rs.append(curr_rim[0])
                     rim_thetas.append(curr_rim[1])
                     rim_phis.append(curr_rim[2])
+                    distances.append(curr_r[0])
                     curr_rim_cnt += 1
+        if diagnostics or self.diagnostics:
+            self.check_diagnostics_directory()
+            plt.hist(distances, bins=int(np.sqrt(len(distances))))
+            plt.xlabel("Distance from the center")
+            plt.title("Rim galaxies")
+            plt.savefig("diagnostics/distance_distribution_of_rim.pdf")
         rim_rs       = np.array(rim_rs).flatten()
         rim_thetas   = np.array(rim_thetas).flatten()
         rim_phis     = np.array(rim_phis).flatten()
@@ -485,7 +494,7 @@ class GeneralTools():
     
     def generate_clumps(self, r_centers, theta_centers, phi_centers, diagnostics=False):
         # generate a list to choose among the centers and flats
-        galaxy_selection  = np.random.randint(0, 2, self.nr_clump)
+        galaxy_selection  = np.random.choice([0, 1], weights=[1./len(r_center), (1.-1./len(r_center))], k=self.nr_clump)
         num_center_clumps = len(galaxy_selection[galaxy_selection==0])
         num_flat_clumps   = len(galaxy_selection[galaxy_selection==1])
         # generate flat galaxies (will be returned and be added to the mocks later)
@@ -503,6 +512,7 @@ class GeneralTools():
         center_clump_rs     = []
         center_clump_thetas = []
         center_clump_phis   = []
+        distances           = []
         for i in range(num_center_clumps):
             curr_r_center     = selected_r_centers[i]
             curr_theta_center = selected_theta_centers[i]
@@ -519,6 +529,16 @@ class GeneralTools():
                     center_clump_rs.append(curr_clump[0])
                     center_clump_thetas.append(curr_clump[1])
                     center_clump_phis.append(curr_clump[2])
+                    distances.append(clump_r[j])
+        if diagnostics or self.diagnostics:
+            self.check_diagnostics_directory()
+            plt.clf()
+            distances = np.array(distances)
+            distances = distances[distances<=50]
+            plt.hist(distances, bins=int(np.sqrt(len(distances))), normed=True)
+            plt.xlabel("Distance from the galaxies")
+            plt.title("Center clump galaxies")
+            plt.savefig("diagnostics/distance_distribution_of_center_clumps.pdf")
         center_clump_rs     = np.array(center_clump_rs)
         center_clump_thetas = np.array(center_clump_thetas)
         center_clump_phis   = np.array(center_clump_phis)
@@ -526,6 +546,7 @@ class GeneralTools():
         flat_clump_rs     = []
         flat_clump_thetas = []
         flat_clump_phis   = []
+        distances         = []
         for i in range(num_flat_clumps):
             curr_r_flat     = selected_r_flats[i]
             curr_theta_flat = selected_theta_flats[i]
@@ -542,6 +563,16 @@ class GeneralTools():
                     flat_clump_rs.append(curr_clump[0])
                     flat_clump_thetas.append(curr_clump[1])
                     flat_clump_phis.append(curr_clump[2])
+                    distances.append(clump_r[j])
+        if diagnostics or self.diagnostics:
+            self.check_diagnostics_directory()
+            plt.clf()
+            distances = np.array(distances)
+            distances = distances[distances<=50]
+            plt.hist(distances, bins=int(np.sqrt(len(distances))), normed=True)
+            plt.xlabel("Distance from the galaxies")
+            plt.title("Flat clump galaxies")
+            plt.savefig("diagnostics/distance_distribution_of_flat_clumps.pdf")
         flat_clump_rs     = np.array(flat_clump_rs)
         flat_clump_thetas = np.array(flat_clump_thetas)
         flat_clump_phis   = np.array(flat_clump_phis)
