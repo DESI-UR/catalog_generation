@@ -493,12 +493,15 @@ class GeneralTools():
         return self.generate_clumps(r, theta, phi, diagnostics)
     
     def generate_clumps(self, r_centers, theta_centers, phi_centers, diagnostics=False):
-        # generate a list to choose among the centers and flats
-        galaxy_selection  = np.random.choice([0, 1], weights=[1./len(r_centers), (1.-1./len(r_centers))], size=self.nr_clump)
-        num_center_clumps = len(galaxy_selection[galaxy_selection==0])
-        num_flat_clumps   = len(galaxy_selection[galaxy_selection==1])
         # generate flat galaxies (will be returned and be added to the mocks later)
         r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
+        total_num_galaxies           = len(r_centers) + len(r_flat)
+        # generate a list to choose among the centers and flats
+        galaxy_selection  = np.random.choice([0, total_num_galaxies], size=self.nr_clump)
+        num_center_clumps = len(galaxy_selection[galaxy_selection<len(r_centers)])
+        num_flat_clumps   = len(galaxy_selection[galaxy_selection>=len(r_centers)])
+        print(num_center_clumps)
+        print(num_flat_clumps)
         # randomly choose indices from centers and flat for the clumps
         rand_center_idx = np.random.randint(0, len(r_centers), num_center_clumps)
         rand_flat_idx   = np.random.randint(0, len(r_flat),    num_flat_clumps)
