@@ -140,9 +140,9 @@ class GeneralTools():
     None
     """
     def generate_LUT_z2r(self):
-        z_min = self.template_z.min()
-        z_max = self.template_z.max()
-        zs = np.linspace(z_min, z_max+.15, 1000)
+        z_min = 0.1
+        z_max = 3.0
+        zs = np.linspace(z_min, z_max, 1000)
         rs = [r.value for r in self.cosmo.comoving_distance(zs)]
         interpolator = interp1d(zs, rs, bounds_error=False, fill_value=-1.)
         return interpolator
@@ -159,9 +159,9 @@ class GeneralTools():
     None
     """
     def generate_LUT_r2z(self):
-        z_min = self.template_z.min()
-        z_max = self.template_z.max()
-        zs = np.linspace(z_min, z_max+.15, 1000)
+        z_min = 0.1
+        z_max = 3.0
+        zs = np.linspace(z_min, z_max, 1000)
         rs = [r.value for r in self.cosmo.comoving_distance(zs)]
         interpolator = interp1d(rs, zs, bounds_error=False, fill_value=-1.)
         return interpolator            
@@ -273,19 +273,17 @@ class GeneralTools():
         template_r   = np.array(self.template_r)
         template_r   = template_r[template_r<=self.r_hi]
         num_bins     = int(np.sqrt(len(template_r)))
-        n, r_edges   = np.histogram(template_r, bins=num_bins)
+        n, r_edges   = np.histogram(template_r, bins=num_bins, normed=True)
         n            = n.astype(float)
-        weights      = n/np.sum(n)
         r_med        = (r_edges[:-1] + r_edges[1:])/2.
         halfbinsize  = (r_edges[1] - r_edges[0])/2.
-        interpolator = interp1d(r_med, weights, bounds_error=False, fill_value=0.)
+        interpolator = interp1d(r_med, n, bounds_error=False, fill_value=0.)
 
         num_r_test           = len(r_test)
-        n_test, r_test_edges = np.histogram(r_test, bins=int(np.sqrt(num_r_test)))
+        n_test, r_test_edges = np.histogram(r_test, bins=int(np.sqrt(num_r_test)), normed=True)
         n_test               = n_test.astype(float)
-        weights_test         = n_test/np.sum(n_test)
         r_test_med           = (r_test_edges[:-1] + r_test_edges[1:])/2.
-        interpolator_test    = interp1d(r_test_med, weights_test, bounds_error=False, fill_value=0.)
+        interpolator_test    = interp1d(r_test_med, n_test, bounds_error=False, fill_value=0.)
 
         p1  = interpolator(r_test)
         p2  = interpolator_test(r_test)
@@ -314,22 +312,19 @@ class GeneralTools():
     """
     def check_z_acceptance(self, z_test):
         template_z   = np.array(self.template_z)
-        template_z   = template_z[template_z<=self.z_hi]
-        template_z   = template_z[template_z>=self.z_lo]
+        template_z   = template_z[np.logical_and(template_z<=self.z_hi, template_z>=self.z_lo)]
         num_bins     = int(np.sqrt(len(template_z)))
-        n, z_edges   = np.histogram(template_z, bins=num_bins)
+        n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True)
         n            = n.astype(float)
-        weights      = n/np.sum(n)
         z_med        = (z_edges[:-1] + z_edges[1:])/2.
         halfbinsize  = (z_edges[1] - z_edges[0])/2.
-        interpolator = interp1d(z_med, weights, bounds_error=False, fill_value=0.)
+        interpolator = interp1d(z_med, n, bounds_error=False, fill_value=0.)
 
         num_z_test           = len(z_test)
-        n_test, z_test_edges = np.histogram(z_test, bins=int(np.sqrt(num_z_test)))
+        n_test, z_test_edges = np.histogram(z_test, bins=int(np.sqrt(num_z_test)), normed=True)
         n_test               = n_test.astype(float)
-        weights_test         = n_test/np.sum(n_test)
         z_test_med           = (z_test_edges[:-1] + z_test_edges[1:])/2.
-        interpolator_test    = interp1d(z_test_med, weights_test, bounds_error=False, fill_value=0.)
+	interpolator_test    = interp1d(z_test_med, n_test, bounds_error=False, fill_value=0.)
 
         p1  = interpolator(z_test)
         p2  = interpolator_test(z_test)
