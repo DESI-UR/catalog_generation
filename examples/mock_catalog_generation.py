@@ -56,7 +56,7 @@ print("Number of flat clump galaxies: {}".format(len(flat_clumps[0])))
 r2z_function = gt.generate_LUT_r2z()
 # first, the center galaxies:
 z_center     = r2z_function(r_center)
-z_acceptance = z_center<=gt.z_hi #gt.check_z_acceptance(z_center)
+z_acceptance = z_center<=gt.z_max #gt.check_z_acceptance(z_center)
 z_center     = z_center[z_acceptance]
 theta_center = theta_center[z_acceptance]
 phi_center   = phi_center[z_acceptance]
@@ -68,7 +68,7 @@ theta_rim = theta_rim[z_acceptance]
 phi_rim   = phi_rim[z_acceptance]
 # third, the flat galaxies
 z_flat       = r2z_function(flats[0])
-z_acceptance = z_flat<=gt.z_hi#gt.check_z_acceptance(z_flat)
+z_acceptance = z_flat<=gt.z_max#gt.check_z_acceptance(z_flat)
 z_flat       = z_flat[z_acceptance]
 theta_flat   = flats[1][z_acceptance]
 phi_flat     = flats[2][z_acceptance]
@@ -86,7 +86,7 @@ theta_flat_clumps = flat_clumps[1][z_acceptance]
 phi_flat_clumps   = flat_clumps[2][z_acceptance]
 # lastly, we duplicate the z-template and apply acceptance test for diagnostic purposes
 template_z   = np.array(gt.template_z)
-template_z   = template_z[template_z<gt.z_hi]
+template_z   = template_z[template_z<gt.z_max]
 
 """
 # The results
