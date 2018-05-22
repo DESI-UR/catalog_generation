@@ -57,11 +57,19 @@ r_rim, theta_rim, phi_rim = gen_tool.generate_rim(r_center, theta_center, phi_ce
 ```
 
 ### Generating the clump and flat galaxies
+In addition to the center and rim galaxies, randomy distributed flat galaxies are introduced as shown in the example below. Then, a number of clump galaxies are injected centered around the all the galaxies. The clumps are categorized into two groups: center clumps and flat clumps. The defition of center clumps is left open for the user. User can use rims for the center clumps or user can leave them for the second group, flat clumps. In the example below, rim galaxies are considered as centers for center clumps. There is no difference in generating both group of clumps, they both use the same power law distribution for their location with respect to the center of a clump. The only difference is the number of clumps around a certain type of object.
 ```
 center_clumps, flat_clumps, flats = gt.generate_clumps(np.append(r_center, r_rim), np.append(theta_center, theta_rim), np.append(phi_center, phi_rim))
 ```
 
-### Diagnostics
+### Final steps
+The galaxies are all generated using a completeness map so that user will only get galaxies in the field of view of an experiment. However, no redshift acceptance is applied until now. The example here shows how a user can apply the redshift acceptance test:
 ```
-
+r2z_function = gt.generate_LUT_r2z()
+z            = r2z_function(r)
+z_acceptance = gt.check_z_acceptance(z)
+z            = z[z_acceptance]
+theta        = theta[z_acceptance]
+phi          = phi[z_acceptance]
 ```
+The first line is an interpolator for z-to-r conversion which is faster than using the astropy package for all the values.
