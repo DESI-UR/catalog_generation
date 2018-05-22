@@ -118,14 +118,14 @@ class GeneralTools():
         self.n_clump        = int(self.config.get('Gen Params','n_clump'))
         self.n_clump_center = int(self.config.get('Gen Params','n_centerclump'))
         try:
-            self.z_lo       = float(self.config.get("Gen Params", "z_lo"))
-            self.z_hi       = float(self.config.get("Gen Params", "z_hi"))
+            self.z_min      = float(self.config.get("Gen Params", "z_min"))
+            self.z_max      = float(self.config.get("Gen Params", "z_max"))
         except:
             print("using predefined z bounds")
-            self.z_lo       = 0.4
-            self.z_hi       = 0.7
-        self.r_hi       = self.cosmo.comoving_distance(self.z_hi).value
-        self.r_lo       = self.cosmo.comoving_distance(self.z_lo).value
+            self.z_min      = 0.4
+            self.z_max      = 0.7
+        self.r_max      = self.cosmo.comoving_distance(self.z_max).value
+        self.r_min      = self.cosmo.comoving_distance(self.z_min).value
 
 
     """
@@ -180,7 +180,7 @@ class GeneralTools():
     def get_template(self):
         self.hdulist      = fits.open(self.datafile)
         self.data_z       = self.hdulist[1].data['Z']
-        template_cut = np.array([(self.data_z[i] < self.z_hi+0.125) and (self.data_z[i] > self.z_lo) for i in range(len(self.data_z))])
+        template_cut = np.array([(self.data_z[i] < self.z_max+0.125) and (self.data_z[i] > self.z_min) for i in range(len(self.data_z))])
         self.template_z   = self.data_z[template_cut]
         self.template_r   = [r.value for r in self.cosmo.comoving_distance(self.template_z)]
         self.template_r_len = len(self.template_r)
@@ -271,7 +271,7 @@ class GeneralTools():
     """
     def check_radial_acceptance(self, r_test):
         template_r   = np.array(self.template_r)
-        template_r   = template_r[template_r<=self.r_hi]
+        template_r   = template_r[template_r<=self.r_max]
         num_bins     = int(np.sqrt(len(template_r)))
         n, r_edges   = np.histogram(template_r, bins=num_bins, normed=True)
         n            = n.astype(float)
@@ -312,7 +312,7 @@ class GeneralTools():
     """
     def check_z_acceptance(self, z_test):
         template_z   = np.array(self.template_z)
-        template_z   = template_z[np.logical_and(template_z<=self.z_hi, template_z>=self.z_lo)]
+        template_z   = template_z[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
         num_bins     = int(np.sqrt(len(template_z)))
         n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True)
         n            = n.astype(float)
