@@ -35,7 +35,7 @@ print("Number of center galaxies: {}".format(len(r_center)))
 # The number of rim galaxies is read from the configuration file. Later, we will add the feature to define the number of
 # rim galaxies through the function keeping the default to use the configuration file.
 
-r_rim, theta_rim, phi_rim = gt.generate_rim(r_center, theta_center, phi_center, diagnostics=True)
+r_rim, theta_rim, phi_rim = gt.generate_rim(r_center, theta_center, phi_center)
 print("Number of rim galaxies: {}".format(len(r_rim)))
 
 # Generating the clumps
@@ -45,7 +45,7 @@ print("Number of rim galaxies: {}".format(len(r_rim)))
 # used in the code. Also in the code, flat galaxies are generated and used for injecting clumps. All the input parameters
 # are defined in the configuration file.
 
-center_clumps, flat_clumps, flats = gt.generate_clumps(np.append(r_center, r_rim), np.append(theta_center, theta_rim), np.append(phi_center, phi_rim), diagnostics=True)
+center_clumps, flat_clumps, flats = gt.generate_clumps(np.append(r_center, r_rim), np.append(theta_center, theta_rim), np.append(phi_center, phi_rim))
 print("Number of flat galaxies: {}".format(len(flats[0])))
 print("Number of center clump galaxies: {}".format(len(center_clumps[0])))
 print("Number of flat clump galaxies: {}".format(len(flat_clumps[0])))
@@ -88,6 +88,7 @@ phi_flat_clumps   = flat_clumps[2][z_acceptance]
 template_z   = np.array(gt.template_z)
 template_z   = template_z[template_z<gt.z_hi]
 
+"""
 # The results
 # The distributions and the positions of the galaxies are plotted here. As can be seen, the acceptance is applied during the generation.
 plt.figure(1, figsize=(16,8))
@@ -142,6 +143,7 @@ ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 ax.set_xlabel(r'$\phi$ [deg]')
 plt.savefig("distributions.pdf", bbox_inches='tight')
 plt.show()
+"""
 """
 plt.figure(2, figsize=(12,12))
 plt.subplot(221)
