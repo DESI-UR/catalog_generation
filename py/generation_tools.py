@@ -182,11 +182,16 @@ class GeneralTools():
         self.data_z       = self.hdulist[1].data['Z']
         template_cut = np.array([(self.data_z[i] < self.z_max+0.125) and (self.data_z[i] > self.z_min) for i in range(len(self.data_z))])
         self.template_z   = self.data_z[template_cut]
+        try:
+            self.template_w = self.hdulist[1].data['HistoW'][template_cut]
+        except:
+            self.template_w = None
         self.template_r   = [r.value for r in self.cosmo.comoving_distance(self.template_z)]
         self.template_r_len = len(self.template_r)
         self.template_r_min = np.amin(self.template_r)
         self.template_r_max = np.amax(self.template_r)
-
+        
+            
         
     """
     Function to read the completeness map for mock and random generation
@@ -313,8 +318,13 @@ class GeneralTools():
     def check_z_acceptance(self, z_test):
         template_z   = np.array(self.template_z)
         template_z   = template_z[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
-        num_bins     = int(np.sqrt(len(template_z)))
-        n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True)
+        if template_w is not None:
+            template_w   = self.template_w[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
+            num_bins     = len(template_w)
+            n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True, weights=template_w)
+        else:
+            num_bins     = int(np.sqrt(len(template_z)))
+            n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True)
         n            = n.astype(float)
         z_med        = (z_edges[:-1] + z_edges[1:])/2.
         halfbinsize  = (z_edges[1] - z_edges[0])/2.
@@ -324,8 +334,8 @@ class GeneralTools():
         n_test, z_test_edges = np.histogram(z_test, bins=int(np.sqrt(num_z_test)), normed=True)
         n_test               = n_test.astype(float)
         z_test_med           = (z_test_edges[:-1] + z_test_edges[1:])/2.
-	interpolator_test    = interp1d(z_test_med, n_test, bounds_error=False, fill_value=0.)
-
+        interpolator_test    = interp1d(z_test_med, n_test, bounds_error=False, fill_value=0.)
+        
         p1  = interpolator(z_test)
         p2  = interpolator_test(z_test)
         acc = [np.random.uniform(0, p) for p in p2]
@@ -612,3 +622,18 @@ class GeneralTools():
         cols = fits.ColDefs([col1, col2, col3, col4, col5])
         hdu  = fits.BinTableHDU.from_columns(cols, header=header)
         hdu.writeto(filename)
+
+def generate_histo_from_cat(inFilename, outFilename):
+    # reads the datafile to generate a histogram
+    # this works on any DESI datachallange
+    # it may need to be modified later for other experiments (maybe)
+    hdus            = fits.open(inFilename)
+    zs              = np.array(hdus[1].data['Z'])
+    entries, edges  = np.histogram(zs, bins=int(np.sqrt(len(zs))))
+    # after getting the histogram, generate a new fits file
+    # with the bin centers and entries (as weights)
+    col1 = fits.Column(name="Z",      array=(edges[:-1]+edges[1:])/2., format="E")
+    col2 = fits.Column(name="HistoW", array=entries, format="E")
+    cols = fits.ColDefs([col1, col2])
+    hdu  = fits.BinTableHDU.from_columns(cols)
+    hdu.writeto(outFilename)
