@@ -235,7 +235,10 @@ class GeneralTools():
     def generate_r(self, nobs, diagnostics=False):
         num_obs = 0
         rlist   = []
-        n, r_edges  = np.histogram(self.template_r, bins=int(np.sqrt(self.template_r_len)))
+        if self.template_w is not None:
+            n, r_edges  = np.histogram(self.template_r, bins=self.template_r_len, weights=self.template_w)
+        else:
+            n, r_edges  = np.histogram(self.template_r, bins=int(np.sqrt(self.template_r_len)))
         n           = n.astype(float)
         weights     = n/np.sum(n)
         r_med       = (r_edges[:-1] + r_edges[1:])/2.
@@ -317,12 +320,13 @@ class GeneralTools():
     """
     def check_z_acceptance(self, z_test):
         template_z   = np.array(self.template_z)
-        template_z   = template_z[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
-        if template_w is not None:
+        if self.template_w is not None:
             template_w   = self.template_w[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
+            template_z   = template_z[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
             num_bins     = len(template_w)
             n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True, weights=template_w)
         else:
+            template_z   = template_z[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
             num_bins     = int(np.sqrt(len(template_z)))
             n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True)
         n            = n.astype(float)
