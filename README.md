@@ -16,6 +16,8 @@ The version of the python packages listed below are the tested version. Any rece
 * SciPy (version 0.19.1)
 * Matplotlib (version 2.0.0)
 
+Generating the mock requires a completeness map and a redshift distribution. An example completeness map is provided at `../data/completeness.tar.gz` that user needs to extract. As for the redshift distribution, user can use a data challenge file which has the information for individual galaxies or use a fits file similar to the one provided at `../data/example.fits`. 
+
 ## Introduction
 
 To fully simulate a signal due Baryon Acoustic Oscillations (BAO) in galaxy distribution one needs to run a full simulation of the Universe evolving from the era of decoupling to present day. It is very CPU consuming and thus limits the range of parameters that can be tested. At the same time future high statistics experiments will demand a control over the systematic uncertainties down to sub-percent level. Here, we suggest a model that would significantly reduce this computational time, while having main features present in the observation data. 
