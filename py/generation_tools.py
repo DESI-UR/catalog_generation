@@ -594,7 +594,7 @@ class GeneralTools():
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
 
     def write_to_fits(self, col1, col2, col3, col4, col5, filename, coordinates=0):
-        col_defs = [['phi', 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
+        col_defs = [['phi', 'theta', 'z', 'weight'], ['dec', 'ra', 'z', 'weight']]
         if coordinates == -1:
             coordinates = self.coordinates
         if coordinates == 1:
