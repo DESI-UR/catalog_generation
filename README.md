@@ -16,7 +16,7 @@ The version of the python packages listed below are the tested version. Any rece
 * SciPy (version 0.19.1)
 * Matplotlib (version 2.0.0)
 
-Generating the mock requires a completeness map and a redshift distribution. An example completeness map is provided at `../data/completeness.tar.gz` that user needs to extract. As for the redshift distribution, user can use a data challenge file which has the information for individual galaxies or use a fits file similar to the one provided at `../data/example.fits`. 
+Generating the mock requires a completeness map and a redshift distribution. An example completeness map is provided at `data/completeness.tar.gz` that user needs to extract. As for the redshift distribution, user can use a data challenge file which has the information for individual galaxies or use a fits file similar to the one provided at `data/example.fits`. 
 
 ## Introduction
 
