@@ -464,7 +464,7 @@ class GeneralTools():
                                              np.array([curr_r[0], curr_theta[0], curr_phi[0]]))
                 pixel      = hp.ang2pix(self.nside, curr_rim[1], curr_rim[2], lonlat=True)
                 # apply angular acceptance.
-                if self.completeness[pixel] > 0:
+                if self.completeness[pixel] == 1:
                     rim_rs.append(curr_rim[0])
                     rim_thetas.append(curr_rim[1])
                     rim_phis.append(curr_rim[2])
@@ -505,8 +505,10 @@ class GeneralTools():
         # generate flat galaxies (will be returned and be added to the mocks later)
         r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
         total_num_galaxies           = len(r_centers) + len(r_flat)
+        print(len(r_centers), len(r_flat), total_num_galaxies)
         # generate a list to choose among the centers and flats
-        galaxy_selection  = np.random.choice([0, total_num_galaxies], size=self.nr_clump)
+        galaxy_selection  = np.random.choice(np.arange(0, total_num_galaxies, 1), size=self.nr_clump)
+        print(galaxy_selection[galaxy_selection<len(r_centers)])
         num_center_clumps = len(galaxy_selection[galaxy_selection<len(r_centers)])
         num_flat_clumps   = len(galaxy_selection[galaxy_selection>=len(r_centers)])
         print(num_center_clumps)
@@ -537,7 +539,7 @@ class GeneralTools():
                                              np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
                 pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
                 # apply angular acceptance
-                if self.completeness[pixel] > 0:
+                if self.completeness[pixel] == 1:
                     center_clump_rs.append(curr_clump[0])
                     center_clump_thetas.append(curr_clump[1])
                     center_clump_phis.append(curr_clump[2])
@@ -571,7 +573,7 @@ class GeneralTools():
                                              np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
                 pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
                 # apply angular acceptance
-                if self.completeness[pixel] > 0:
+                if self.completeness[pixel] == 1:
                     flat_clump_rs.append(curr_clump[0])
                     flat_clump_thetas.append(curr_clump[1])
                     flat_clump_phis.append(curr_clump[2])
