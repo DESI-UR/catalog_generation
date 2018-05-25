@@ -20,8 +20,6 @@ import os
 from scipy.interpolate import interp1d
 
 NSIDE = -1
-fbool = False
-
 DEG2RAD = np.pi/180.0
 RAD2DEG = 1./DEG2RAD
 
@@ -215,7 +213,21 @@ class GeneralTools():
             hp.mollview(self.completeness, title="Completeness")
             plt.savefig("diagnostics/completeness.pdf")
 
-    # generate r values uniformly distributed with (r_min, r_max)
+    """
+    Function to  generate r values uniformly distributed with (r_min, r_max)
+
+    Parameters
+    ----------
+    num_obs : int
+        number of r values to generate
+    
+    diagnostics : boolean
+
+    Returns
+    -------
+    array(dtype=flat)
+        
+    """
     def generate_uniform_r(self, num_obs=None, diagnostics=False):
         if num_obs == None:
             num_obs = self.n_center
@@ -228,10 +240,24 @@ class GeneralTools():
             plt.title("Flat r distribution")
             plt.savefig("diagnostics/r_distribution.pdf")        
         return flat_r
+
+    """
+    Function to generate r values based on histogrammed data r distribution
+    This function is used to generate r distribution depending on the
+    template provided
     
-    # generate r values based on histogrammed data r distribution
-    # this function is used to generate r distribution depending on the
-    # template provided
+    Parameters
+    ----------
+    num_obs : int
+        number of r values to generate
+    
+    diagnostics : boolean
+
+    Returns
+    -------
+    array(dtype=flat)
+    
+    """
     def generate_r(self, nobs, diagnostics=False):
         num_obs = 0
         rlist   = []
@@ -267,7 +293,7 @@ class GeneralTools():
     
     Parameters
     ----------
-    r_test: double
+    r_test : double
         r values to be test for acceptance
 
     Returns
@@ -308,7 +334,7 @@ class GeneralTools():
     
     Parameters
     ----------
-    z_test: double
+    z_test : double
         z values to be test for acceptance
 
     Returns
@@ -348,7 +374,25 @@ class GeneralTools():
             return p1>acc
         else:
             return np.full(len(p1), True)
-                
+
+    """
+    Function that returns randomly generated (theta, phi)'s using the 
+    completeness map defined in the configuration
+
+    Parameters
+    ----------
+    nobs: int
+        number of (theta, phi) pair to generate
+    diagnostics: bool
+        
+    Returns
+    -------
+    array of arrays
+        The first column of the returned array is for theta and the second column is for  the phi
+        coordinates. These coordinates are later transformed into RA and Dec while writing to the
+        fits file.
+ 
+    """
     def generate_uniform_angular_position(self, nobs, diagnostics=False):
         num_obs  = 0
         thetas   = []
@@ -497,22 +541,22 @@ class GeneralTools():
             plt.savefig("diagnostics/generated_rim_phi.pdf")
         return rim_rs, rim_thetas, rim_phis
 
+    def generate_flat_galaxies(self, diagnostics=False):
+        r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
+        return r_flat, theta_flat, phi_flat
+    
     def generate_clumps_from_file(self, filename, diagnostics=False):
         r, theta, phi = self.read_generated_file(filename)
         return self.generate_clumps(r, theta, phi, diagnostics)
     
     def generate_clumps(self, r_centers, theta_centers, phi_centers, diagnostics=False):
         # generate flat galaxies (will be returned and be added to the mocks later)
-        r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
+        r_flat, theta_flat, phi_flat = self.generate_flat_galaxies()
         total_num_galaxies           = len(r_centers) + len(r_flat)
-        print(len(r_centers), len(r_flat), total_num_galaxies)
         # generate a list to choose among the centers and flats
         galaxy_selection  = np.random.choice(np.arange(0, total_num_galaxies, 1), size=self.nr_clump)
-        print(galaxy_selection[galaxy_selection<len(r_centers)])
         num_center_clumps = len(galaxy_selection[galaxy_selection<len(r_centers)])
         num_flat_clumps   = len(galaxy_selection[galaxy_selection>=len(r_centers)])
-        print(num_center_clumps)
-        print(num_flat_clumps)
         # randomly choose indices from centers and flat for the clumps
         rand_center_idx = np.random.randint(0, len(r_centers), num_center_clumps)
         rand_flat_idx   = np.random.randint(0, len(r_flat),    num_flat_clumps)
