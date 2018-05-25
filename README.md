@@ -24,9 +24,9 @@ To fully simulate a signal due Baryon Acoustic Oscillations (BAO) in galaxy dist
 
 The mock and random catalog generation requires two distributions: z distribution, P(r), and a completeness map of an experiment, R<sub>ang</sub>(&theta;, &phi;).
 
-We start by randomly generating N<sub>center</sub> new galaxies according to the product of R<sub>ang</sub>(&theta;, &phi;) and P(r). These galaxies form centers of BAO ”bubbles”. Then, for each BAO center we add N$_{rim}$ galaxies located at a distance r<sub>BAO</sub> from the center and uniformly distributed over solid angle around the BAO center. Added galaxies can be discarded to correct for the acceptance in r and angles (&theta;, &phi;).
+We start by randomly generating N<sub>center</sub> new galaxies according to the product of R<sub>ang</sub>(&theta;, &phi;) and P(r). These galaxies form centers of BAO ”bubbles”. Then, for each BAO center we add N<sub>rim</sub> galaxies located at a distance r<sub>BAO</sub> from the center and uniformly distributed over solid angle around the BAO center. Added galaxies can be discarded to correct for the acceptance in r and angles (&theta;, &phi;).
 
-Then, N$_{flat}$ random galaxies are generated according to the product of R<sub>ang</sub>(&theta;, &phi;) and P(r). After this, some ”clumping” is introduced around NR$_{clump}$ galaxies drawn randomly from the newly-created mock catalog to mimic galaxy clusters, with BAO centers having a different number of clumping partners because of the potential access of dark matter around the BAO centers. Clumping follows the following distribution:
+Then, N<sub>flat</sub> random galaxies are generated according to the product of R<sub>ang</sub>(&theta;, &phi;) and P(r). After this, some ”clumping” is introduced around NR<sub>clump</sub> galaxies drawn randomly from the newly-created mock catalog to mimic galaxy clusters, with BAO centers having a different number of clumping partners because of the potential access of dark matter around the BAO centers. Clumping follows the following distribution:
 f(r) = Ax(r<sub>0</sub>/r)&gamma;
 where r is the distance of the center of the cluster, A is a normalization parameter and r<sub>0</sub> and &gamma; are input parameters.
 
@@ -54,7 +54,7 @@ r_center, theta_center, phi_center = gen_tool(num_obs=gen_tool.n_center)
 ```
 
 ### Generating the rim galaxies
-The BAO signal is introduced around the center galaxies with a gaussian distribution ($\mu$, $\sigma$)=(r_BAO, sigma_r_BAO). To generate them, one needs to use the `generate_rim` function with the position of the center galaxies:
+The BAO signal is introduced around the center galaxies with a gaussian distribution (&mu;, &sigma;)=(r<sub>BAO</sub>, sigma<sub>r_BAO</sub>). To generate them, one needs to use the `generate_rim` function with the position of the center galaxies:
 ```
 r_rim, theta_rim, phi_rim = gen_tool.generate_rim(r_center, theta_center, phi_center)
 ```
