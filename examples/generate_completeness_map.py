@@ -10,8 +10,8 @@ DEG2RAD    = 1/RAD2DEG
 
 parser = argparse.ArgumentParser(description="This script generates a completeness map based on "+\
                                  "the given RA and Dec limits")
-parser.add_argument("-r", "--ra",     type=float, help="RA limits",  nargs=2, required=True)
-parser.add_argument("-d", "--dec",    type=float, help="Dec limits", nargs=2, required=True)
+parser.add_argument("-r", "--ra",     type=float, nargs=2, required=True, help="RA limits  (range: [0, 360])")
+parser.add_argument("-d", "--dec",    type=float, nargs=2, required=True, help="Dec limits (range: [0, 180])")
 parser.add_argument("-n", "--nside",  type=int,   help="nside for the generated cocmpleteness", default=1024)
 parser.add_argument("-o", "--output", type=str,   help="output filename", required=True)
 parser.add_argument("-p", "--plot",   type=int,   help="plot the resukts in mollview", default=0)
@@ -32,7 +32,7 @@ pixels = np.zeros(hp.nside2npix(nside))
 
 for ra in ras:
     for dec in decs:
-        pixels[hp.ang2pix(nside, ra-90., dec, lonlat=True)] = 1
+        pixels[hp.ang2pix(nside, 360.-ra, 90.-dec, lonlat=True)] = 1
 pixels = np.array(pixels)
 
 if args.plot:
@@ -41,4 +41,3 @@ if args.plot:
     plt.show()
     
 np.savez(args.output, CMPLTNSS=pixels)
-
