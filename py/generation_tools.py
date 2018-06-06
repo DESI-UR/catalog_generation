@@ -19,6 +19,8 @@ import sys
 import os
 from scipy.interpolate import interp1d
 
+import time
+
 NSIDE = -1
 DEG2RAD = np.pi/180.0
 RAD2DEG = 1./DEG2RAD
@@ -401,9 +403,9 @@ class GeneralTools():
         weights  = self.completeness/np.sum(self.completeness)
         pix_idx  = np.arange(self.completeness_len)
         while num_obs < nobs:
-            curr_theta = np.random.uniform(0., 360., 1)
-            curr_phi   = np.random.uniform(-90., 90., 1)
-            curr_pix   = hp.ang2pix(self.nside, curr_theta, curr_phi, lonlat=True)
+            curr_phi   = np.random.uniform(0., 360., 1)
+            curr_theta = np.random.uniform(-90., 90., 1)
+            curr_pix   = hp.ang2pix(self.nside, curr_phi, curr_theta, lonlat=True)
             if self.completeness[curr_pix] == 1:
                 thetas.append(curr_theta)
                 phis.append(curr_phi)
@@ -458,7 +460,7 @@ class GeneralTools():
     # function to convert spherical coordinates to cartesian coordinates
     def toCartesianVector(self, r, theta, phi):
         #unit_vector = hp.pix2vec(self.nside, hp.ang2pix(self.nside, theta, phi, lonlat=True))
-        unit_vector = hp.ang2vec(theta, phi, lonlat=True)
+        unit_vector = hp.ang2vec(phi, theta, lonlat=True)
         curr_vector = r * np.array(unit_vector)
         return curr_vector
         
@@ -466,7 +468,7 @@ class GeneralTools():
     def fromCartesianVector(self, vec):
         r           = np.sqrt( np.sum(np.array(vec)**2) )
         unit_vector = hp.vec2ang(vec, lonlat=True)
-        return r, unit_vector[0], unit_vector[1]
+        return r, unit_vector[1], unit_vector[0]
         
     # function to add two spherical vectors
     def addVectors(self, vec1, vec2):
@@ -501,14 +503,15 @@ class GeneralTools():
         for i in range(len_n_center):
             curr_rim_cnt = 0
             while curr_rim_cnt < self.n_rim:
-                curr_theta = np.random.uniform(0., 360., 1)
-                curr_phi   = np.random.uniform(-90., 90., 1)
+                curr_phi   = np.random.uniform(0., 360., 1)
+                curr_theta = np.random.uniform(-90., 90., 1)
                 curr_r     = self.generate_gaussian(self.r_BAO, self.sigma_r_BAO, 1)
-                curr_rim   = self.addVectors(np.array([r[i], theta[i], phi[i]]),
-                                             np.array([curr_r[0], curr_theta[0], curr_phi[0]]))
-                pixel      = hp.ang2pix(self.nside, curr_rim[1], curr_rim[2], lonlat=True)
+                curr_rim   = (self.toCartesianVector(r[i], theta[i], phi[i]) + \
+                              self.toCartesianVector(curr_r[0], curr_theta[0], curr_phi[0]))[0]
+                pixel      = hp.vec2pix(self.nside, x=curr_rim[0], y=curr_rim[1], z=curr_rim[2])
                 # apply angular acceptance.
                 if self.completeness[pixel] == 1:
+                    curr_rim = self.fromCartesianVector(curr_rim)
                     rim_rs.append(curr_rim[0])
                     rim_thetas.append(curr_rim[1])
                     rim_phis.append(curr_rim[2])
@@ -576,14 +579,18 @@ class GeneralTools():
             curr_theta_center = selected_theta_centers[i]
             curr_phi_center   = selected_phi_centers[i]
             clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump_center)))
-            clump_theta    = np.random.uniform(0., 360., self.n_clump_center)
-            clump_phi      = np.random.uniform(-90., 90., self.n_clump_center)
+            clump_phi      = np.random.uniform(0., 360., self.n_clump_center)
+            clump_theta    = np.random.uniform(-90., 90., self.n_clump_center)
             for j in range(self.n_clump_center):
-                curr_clump = self.addVectors(np.array([curr_r_center, curr_theta_center, curr_phi_center]),
-                                             np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
-                pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
+                #curr_clump = self.addVectors(np.array([curr_r_center, curr_theta_center, curr_phi_center]),
+                #                             np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
+                #pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
+                curr_clump   = (self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]) + \
+                                self.toCartesianVector(curr_r_center, curr_theta_center, curr_phi_center))
+                pixel      = hp.vec2pix(self.nside, x=curr_clump[0], y=curr_clump[1], z=curr_clump[2])
                 # apply angular acceptance
                 if self.completeness[pixel] == 1:
+                    curr_clump = self.fromCartesianVector(curr_clump)
                     center_clump_rs.append(curr_clump[0])
                     center_clump_thetas.append(curr_clump[1])
                     center_clump_phis.append(curr_clump[2])
@@ -610,14 +617,18 @@ class GeneralTools():
             curr_theta_flat = selected_theta_flats[i]
             curr_phi_flat   = selected_phi_flats[i]
             clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump)))
-            clump_theta    = np.random.uniform(0., 360., self.n_clump)
-            clump_phi      = np.random.uniform(-90., 90., self.n_clump)
+            clump_phi      = np.random.uniform(0., 360., self.n_clump)
+            clump_theta    = np.random.uniform(-90., 90., self.n_clump)
             for j in range(self.n_clump):
-                curr_clump = self.addVectors(np.array([curr_r_flat, curr_theta_flat, curr_phi_flat]),
-                                             np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
-                pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
+                #curr_clump = self.addVectors(np.array([curr_r_flat, curr_theta_flat, curr_phi_flat]),
+                #                             np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
+                #pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
+                curr_clump   = (self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]) + \
+                                self.toCartesianVector(curr_r_flat, curr_theta_flat, curr_phi_flat))[0]
+                pixel      = hp.vec2pix(self.nside, x=curr_clump[0], y=curr_clump[1], z=curr_clump[2])
                 # apply angular acceptance
                 if self.completeness[pixel] == 1:
+                    curr_clump = self.fromCartesianVector(curr_clump)
                     flat_clump_rs.append(curr_clump[0])
                     flat_clump_thetas.append(curr_clump[1])
                     flat_clump_phis.append(curr_clump[2])
@@ -640,11 +651,11 @@ class GeneralTools():
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
 
     def write_to_fits(self, col1, col2, col3, col4, col5, filename, coordinates=0):
-        col_defs = [['phi', 'theta', 'z', 'weight'], ['dec', 'ra', 'z', 'weight']]
+        col_defs = [['phi', 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
         if coordinates == -1:
             coordinates = self.coordinates
         if coordinates == 1:
-            col2   = (90.-col2)
+            col1   = (90.-col1)
         use_col_defs = col_defs[coordinates]
         # We also write the output in fits format
         if os.path.isfile(filename):

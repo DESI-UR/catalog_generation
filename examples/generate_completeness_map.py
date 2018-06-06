@@ -32,7 +32,7 @@ pixels = np.zeros(hp.nside2npix(nside))
 
 for ra in ras:
     for dec in decs:
-        pixels[hp.ang2pix(nside, 90.-ra, -dec, lonlat=True)] = 1
+        pixels[hp.ang2pix(nside, 90.-ra, dec, lonlat=True)] = 1
 pixels = np.array(pixels)
 
 if args.plot:
