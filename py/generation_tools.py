@@ -404,7 +404,7 @@ class GeneralTools():
         pix_idx  = np.arange(self.completeness_len)
         while num_obs < nobs:
             curr_phi   = np.random.uniform(0., 360., 1)
-            curr_theta = np.random.uniform(-90., 90., 1)
+            curr_theta = np.arccos(np.random.uniform(-1., 1., 1))*RAD2DEG-90.
             curr_pix   = hp.ang2pix(self.nside, curr_phi, curr_theta, lonlat=True)
             if self.completeness[curr_pix] == 1:
                 thetas.append(curr_theta)
@@ -504,7 +504,7 @@ class GeneralTools():
             curr_rim_cnt = 0
             while curr_rim_cnt < self.n_rim:
                 curr_phi   = np.random.uniform(0., 360., 1)
-                curr_theta = np.random.uniform(-90., 90., 1)
+                curr_theta = np.arccos(np.random.uniform(-1., 1., 1))*RAD2DEG-90.
                 curr_r     = self.generate_gaussian(self.r_BAO, self.sigma_r_BAO, 1)
                 curr_rim   = (self.toCartesianVector(r[i], theta[i], phi[i]) + \
                               self.toCartesianVector(curr_r[0], curr_theta[0], curr_phi[0]))[0]
@@ -580,11 +580,8 @@ class GeneralTools():
             curr_phi_center   = selected_phi_centers[i]
             clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump_center)))
             clump_phi      = np.random.uniform(0., 360., self.n_clump_center)
-            clump_theta    = np.random.uniform(-90., 90., self.n_clump_center)
+            clump_theta    = np.arccos(np.random.uniform(-1., 1., self.n_clump_center))*RAD2DEG-90.
             for j in range(self.n_clump_center):
-                #curr_clump = self.addVectors(np.array([curr_r_center, curr_theta_center, curr_phi_center]),
-                #                             np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
-                #pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
                 curr_clump   = (self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]) + \
                                 self.toCartesianVector(curr_r_center, curr_theta_center, curr_phi_center))
                 pixel      = hp.vec2pix(self.nside, x=curr_clump[0], y=curr_clump[1], z=curr_clump[2])
@@ -618,11 +615,8 @@ class GeneralTools():
             curr_phi_flat   = selected_phi_flats[i]
             clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump)))
             clump_phi      = np.random.uniform(0., 360., self.n_clump)
-            clump_theta    = np.random.uniform(-90., 90., self.n_clump)
+            clump_theta    = np.arccos(np.random.uniform(-1., 1., self.n_clump))*RAD2DEG-90.
             for j in range(self.n_clump):
-                #curr_clump = self.addVectors(np.array([curr_r_flat, curr_theta_flat, curr_phi_flat]),
-                #                             np.array([clump_r[j], clump_theta[j], clump_phi[j]]))
-                #pixel      = hp.ang2pix(self.nside, curr_clump[1], curr_clump[2], lonlat=True)
                 curr_clump   = (self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]) + \
                                 self.toCartesianVector(curr_r_flat, curr_theta_flat, curr_phi_flat))[0]
                 pixel      = hp.vec2pix(self.nside, x=curr_clump[0], y=curr_clump[1], z=curr_clump[2])
