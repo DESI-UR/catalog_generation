@@ -115,6 +115,10 @@ class GeneralTools():
         self.n_rim          = int(self.config.get('Gen Params','n_rim'))
         self.n_flat         = int(self.config.get('Gen Params','n_flat'))
         self.nr_clump       = int(self.config.get('Gen Params','nr_clump'))
+        try:
+            self.frac_f2c   = int(self.config.get('Gen Params','frac_f2c'))
+        except:
+            self.frac_f2c   = None
         self.n_clump        = int(self.config.get('Gen Params','n_clump'))
         self.n_clump_center = int(self.config.get('Gen Params','n_centerclump'))
         try:
@@ -557,9 +561,15 @@ class GeneralTools():
         r_flat, theta_flat, phi_flat = self.generate_flat_galaxies()
         total_num_galaxies           = len(r_centers) + len(r_flat)
         # generate a list to choose among the centers and flats
-        galaxy_selection  = np.random.choice(np.arange(0, total_num_galaxies, 1), size=self.nr_clump)
-        num_center_clumps = len(galaxy_selection[galaxy_selection<len(r_centers)])
-        num_flat_clumps   = len(galaxy_selection[galaxy_selection>=len(r_centers)])
+        if self.frac_f2c is None:
+            galaxy_selection  = np.random.choice(np.arange(0, total_num_galaxies, 1), size=self.nr_clump)
+            num_center_clumps = len(galaxy_selection[galaxy_selection<len(r_centers)])
+            num_flat_clumps   = len(galaxy_selection[galaxy_selection>=len(r_centers)])
+        else:
+            num_center_clumps = int(self.nr_clump / ( 1 + self.frac_f2c ))
+            num_flat_clumps   = self.nr_clump - self.center_clumps
+        num_center_clums = num_center_clumps if num_center_clumps > 0 else 1
+        num_flat_clumps  = num_flat_clumps if num_flat_clumps > 0 else 1
         # randomly choose indices from centers and flat for the clumps
         rand_center_idx = np.random.randint(0, len(r_centers), num_center_clumps)
         rand_flat_idx   = np.random.randint(0, len(r_flat),    num_flat_clumps)
