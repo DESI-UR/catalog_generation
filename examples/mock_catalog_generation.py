@@ -10,14 +10,13 @@ import numpy as np
 
 from astropy.io import fits
 
-
 # Generating Mock Catalogs
 # This example shows the use of individual components of the mock generation tools. Each step is explained followed
 # by the use of the specific function. Here we use a configuration file which is similar to the original "../data/catget.cfg".
 # The only difference is the pathing for the input files in the configuration file. In the future, we will try to remove the hardcoded
 # paths from the configuration file.
 
-gt = GeneralTools("../data/catgen_nb.cfg")
+gt = GeneralTools(sys.argv[1])#"../data/catgen_nb.cfg")
 
 # Generating central and flat galaxies
 # The function (generate_galaxies) is used to generate the galaxies in the mock catalog. User can choose either to use a
@@ -97,4 +96,4 @@ all_types  = np.append(np.full(len(z_center), 0),
                                  np.append(np.full(len(z_center_clumps), 2),
                                            np.append(np.full(len(z_flat_clumps), 3), np.full(len(z_flat), 4)))))
 gt.write_to_fits(col1=all_phis, col2=all_thetas, col3=all_zs, col4=np.ones(len(all_zs)), col5=all_types,
-                 filename="mock.fits", coordinates=1)
+                 filename=gt.fname_mock, coordinates=1)
