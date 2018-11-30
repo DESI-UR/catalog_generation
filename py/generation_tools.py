@@ -1,7 +1,7 @@
 """
 Nodules to generate random and mock catalogs
-OB
-Contributors: Dylan and Tolga
+
+Contributors: Tolga Yapici [tyapici@ur.rochester.edu]
 """
 
 
@@ -46,10 +46,11 @@ class GeneralTools():
         self.diagnostics = diagnostics
         self.acceptance  = acceptance
         self.config_file = configFile
+        self.mapping     = {}
         self.getConfig()
         self.get_template()
         self.get_mask()
-
+        
     """
     Function to change the diagnostics level. Even though it can be set during initialization, this
     function makes it possible to change the diagnostics during operation
@@ -119,6 +120,12 @@ class GeneralTools():
             self.frac_f2c   = int(self.config.get('Gen Params','frac_f2c'))
         except:
             self.frac_f2c   = None
+        try:
+            self.a          = float(self.config.get('Gen Params','a'))
+            self.c          = float(self.config.get('Gen Params','c'))
+        except:
+            self.a          = 1.
+            self.c          = 1.
         self.n_clump        = int(self.config.get('Gen Params','n_clump'))
         self.n_clump_center = int(self.config.get('Gen Params','n_centerclump'))
         try:
@@ -130,7 +137,8 @@ class GeneralTools():
             self.z_max      = 0.7
         self.r_max      = self.cosmo.comoving_distance(self.z_max).value
         self.r_min      = self.cosmo.comoving_distance(self.z_min).value
-
+        
+        self.anisotropy_scale = np.array([self.a, self.c, self.a])
 
     """
     Function to generate a lookup table for z to r conversion
@@ -194,9 +202,7 @@ class GeneralTools():
         self.template_r_len = len(self.template_r)
         self.template_r_min = np.amin(self.template_r)
         self.template_r_max = np.amax(self.template_r)
-        
-            
-        
+                    
     """
     Function to read the completeness map for mock and random generation
 
@@ -459,6 +465,12 @@ class GeneralTools():
 
     def generate_center_galaxies(self):
         r_center, theta_center, phi_center = self.generate_galaxies(self.n_center)
+        for i in range(self.n_center):
+            self.mapping[i] = {}
+            self.mapping[i]["childs"] = {}
+            self.mapping[i]["r"]      = r_center[i]
+            self.mapping[i]["theta"]  = theta_center[i]
+            self.mapping[i]["phi"]    = phi_center[i]
         return r_center, theta_center, phi_center
         
     # function to convert spherical coordinates to cartesian coordinates
@@ -466,6 +478,13 @@ class GeneralTools():
         #unit_vector = hp.pix2vec(self.nside, hp.ang2pix(self.nside, theta, phi, lonlat=True))
         unit_vector = hp.ang2vec(phi, theta, lonlat=True)
         curr_vector = r * np.array(unit_vector)
+        return curr_vector
+
+    # function to convert spherical coordinates to cartesian coordinates with eccentricity (to mimick anisotropy)
+    def toCartesianVector2(self, r, theta, phi):
+        #unit_vector = hp.pix2vec(self.nside, hp.ang2pix(self.nside, theta, phi, lonlat=True))
+        unit_vector = hp.ang2vec(phi, theta, lonlat=True)
+        curr_vector = (r * np.asarray(unit_vector)) * self.anisotropy_scale
         return curr_vector
         
     # function to convert cartesian coordinates to spherical coordinates
@@ -510,8 +529,13 @@ class GeneralTools():
                 curr_phi   = np.random.uniform(0., 360., 1)
                 curr_theta = np.arccos(np.random.uniform(-1., 1., 1))*RAD2DEG-90.
                 curr_r     = self.generate_gaussian(self.r_BAO, self.sigma_r_BAO, 1)
+                """
+                print(curr_r[0], curr_theta[i], curr_phi[0],
+                      self.toCartesianVector(curr_r[0], curr_theta[0], curr_phi[0]),
+                      self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0]))
+                """
                 curr_rim   = (self.toCartesianVector(r[i], theta[i], phi[i]) + \
-                              self.toCartesianVector(curr_r[0], curr_theta[0], curr_phi[0]))[0]
+                              self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0]))[0]
                 pixel      = hp.vec2pix(self.nside, x=curr_rim[0], y=curr_rim[1], z=curr_rim[2])
                 # apply angular acceptance.
                 if self.completeness[pixel] == 1:
@@ -520,6 +544,10 @@ class GeneralTools():
                     rim_thetas.append(curr_rim[1])
                     rim_phis.append(curr_rim[2])
                     distances.append(curr_r[0])
+                    self.mapping[i]["childs"][curr_rim_cnt] = {}
+                    self.mapping[i]["childs"][curr_rim_cnt]["r"]     = curr_rim[0]
+                    self.mapping[i]["childs"][curr_rim_cnt]["theta"] = curr_rim[1]
+                    self.mapping[i]["childs"][curr_rim_cnt]["phi"]   = curr_rim[2]
                     curr_rim_cnt += 1
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
