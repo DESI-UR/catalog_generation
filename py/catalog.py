@@ -11,7 +11,7 @@ class catalog:
     @property
     def centers(self):
         return self._centers
-    @centers.setter(self, centers):
+    @centers.setter
     def centers(self, centers):
         self._centers = centers
 
