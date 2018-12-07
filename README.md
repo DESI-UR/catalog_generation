@@ -48,22 +48,23 @@ gen_tool = GenerationTools(CONFIGURATION_FILE)
 In the configuration file, user needs to provide either a sample catalog with redshifts or a redshift distribution as `datafile`. The mock and random catalog to be generated within a window given in `angmask`. For the users who do not have such a file or want to generate a catalog in a custom region in the sky, a python script, `examples/generate_completeness_map.py`, is included in the project. This script generates a completeness map for a region of interest. For more complicated completeness maps, users need to write their own scripts considering the data structure shown in `examples/generate_completeness_map.py`
 
 ### Generating center galaxies
-One needs to generate the center galaxies to be used for introducing the BAO galaxies. The number of center galaxies can be either entered a number or the number defined in the configuration file. The example line below shows how to generate center galaxies using the configuration file. 
+One needs to generate the center galaxies to be used for introducing the BAO galaxies. The number of center galaxies are defined in the configuration file. The example line below shows how to generate center galaxies.
 ```
-r_center, theta_center, phi_center = gen_tool(num_obs=gen_tool.n_center)
+gen_tool.generate_center_galaxies()
 ```
 
 ### Generating the rim galaxies
-The BAO signal is introduced around the center galaxies with a gaussian distribution (&mu;, &sigma;)=(r<sub>BAO</sub>, sigma<sub>r_BAO</sub>). To generate them, one needs to use the `generate_rim` function with the position of the center galaxies:
+The BAO signal is introduced around the center galaxies with a gaussian distribution (&mu;, &sigma;)=(r<sub>BAO</sub>, sigma<sub>r_BAO</sub>). To generate them, one needs to use the `generate_rim` function. The position of the center galaxies are pulled from the catalog object within `gen_tool`.
 ```
-r_rim, theta_rim, phi_rim = gen_tool.generate_rim(r_center, theta_center, phi_center)
+gen_tool.generate_rim()
 ```
 
 ### Generating the clump and flat galaxies
-In addition to the center and rim galaxies, randomy distributed flat galaxies are introduced as shown in the example below. Then, a number of clump galaxies are injected centered around the all the galaxies. The clumps are categorized into two groups: center clumps and flat clumps. The defition of center clumps is left open for the user. User can use rims for the center clumps or user can leave them for the second group, flat clumps. In the example below, rim galaxies are considered as centers for center clumps. There is no difference in generating both group of clumps, they both use the same power law distribution for their location with respect to the center of a clump. The only difference is the number of clumps around a certain type of object.
+In addition to the center and rim galaxies, randomy distributed flat galaxies needed to be introduced. It is automatically done when the clumps are being generated. Then, a number of clump galaxies are injected centered around some selected galaxies. The clumps are categorized into two groups: center seeded clumps and flat seeded clumps. The defition of center seeded clumps is left open for the user. User can use rims for the center seed clumps. The second group, flat seeded clumps, are selected among the flat galaxies generated. In the example below, rim galaxies are added to the center seeded clumps by setting `add_clumps_to_rims=True` (which is False by default).
 ```
-center_clumps, flat_clumps, flats = gt.generate_clumps(np.append(r_center, r_rim), np.append(theta_center, theta_rim), np.append(phi_center, phi_rim))
+gt.generate_clumps(add_clumps_to_rims=True)
 ```
+There is no difference in generating both group of clumps, they both use the same power law distribution for their location with respect to the seed galaxy of a clump. The only difference is the number of clumps around a certain type of object. This is controlled by the two parameters in the configuration file: `frac_f2c` and `frac_c2r`. `frac_f2c` defines the fraction of flat seeded clumps to center seeded clumps and `frac_c2r` defines the fraction of center galaxies used with respect to the rim galaxies for the center seed galaxies. If the parameters are not defined in the configuration, `gen_tool` defaults to `None` and use random distributions for the selections
 
 ### Final steps
 The galaxies are all generated using a completeness map so that user will only get galaxies in the field of view of an experiment. However, no redshift acceptance is applied until now. The example here shows how a user can apply the redshift acceptance test:
@@ -76,3 +77,7 @@ theta        = theta[z_acceptance]
 phi          = phi[z_acceptance]
 ```
 The first line is an interpolator for z-to-r conversion which is faster than using the astropy package for all the values.
+
+### Saving the output
+
+Being written
