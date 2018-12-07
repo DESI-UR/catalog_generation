@@ -62,7 +62,7 @@ gen_tool.generate_rim()
 ### Generating the clump and flat galaxies
 In addition to the center and rim galaxies, randomy distributed flat galaxies needed to be introduced. It is automatically done when the clumps are being generated. Then, a number of clump galaxies are injected centered around some selected galaxies. The clumps are categorized into two groups: center seeded clumps and flat seeded clumps. The defition of center seeded clumps is left open for the user. User can use rims for the center seed clumps. The second group, flat seeded clumps, are selected among the flat galaxies generated. In the example below, rim galaxies are added to the center seeded clumps by setting `add_clumps_to_rims=True` (which is False by default).
 ```
-gt.generate_clumps(add_clumps_to_rims=True)
+gen_tool.generate_clumps(add_clumps_to_rims=True)
 ```
 There is no difference in generating both group of clumps, they both use the same power law distribution for their location with respect to the seed galaxy of a clump. The only difference is the number of clumps around a certain type of object. This is controlled by the two parameters in the configuration file: `frac_f2c` and `frac_c2r`. `frac_f2c` defines the fraction of flat seeded clumps to center seeded clumps and `frac_c2r` defines the fraction of center galaxies used with respect to the rim galaxies for the center seed galaxies. If the parameters are not defined in the configuration, `gen_tool` defaults to `None` and use random distributions for the selections
 
