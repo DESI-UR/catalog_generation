@@ -1,9 +1,8 @@
 """
-Nodules to generate random and mock catalogs
+Modules to generate random and mock catalogs
 
 Contributors: Tolga Yapici [tyapici@ur.rochester.edu]
 """
-
 
 import numpy as np
 import healpy as hp
@@ -18,6 +17,9 @@ import astropy.units as u
 import sys
 import os
 from scipy.interpolate import interp1d
+
+from galaxy import galaxy
+from catalog import catalog
 
 import time
 
@@ -46,7 +48,7 @@ class GeneralTools():
         self.diagnostics = diagnostics
         self.acceptance  = acceptance
         self.config_file = configFile
-        self.mapping     = {}
+        self.catalog     = catalog()
         self.getConfig()
         self.get_template()
         self.get_mask()
@@ -120,6 +122,10 @@ class GeneralTools():
             self.frac_f2c   = int(self.config.get('Gen Params','frac_f2c'))
         except:
             self.frac_f2c   = None
+        try:
+            self.frac_c2r   = int(self.config.get('Gen Params','frac_c2r'))
+        except:
+            self.frac_c2r   = None
         try:
             self.a          = float(self.config.get('Gen Params','a'))
             self.c          = float(self.config.get('Gen Params','c'))
@@ -465,13 +471,13 @@ class GeneralTools():
 
     def generate_center_galaxies(self):
         r_center, theta_center, phi_center = self.generate_galaxies(self.n_center)
+        # TODO: using the galaxy and catalog clusters
+        #       populate the objects
+        center_galaxies = {}
         for i in range(self.n_center):
-            self.mapping[i] = {}
-            self.mapping[i]["childs"] = {}
-            self.mapping[i]["r"]      = r_center[i]
-            self.mapping[i]["theta"]  = theta_center[i]
-            self.mapping[i]["phi"]    = phi_center[i]
-        return r_center, theta_center, phi_center
+            center_galaxies["cen_{}".format(i)] = galaxy(theta=theta_center[i], phi=phi_center[i], r=r_center[i], TYPE=0)
+        self.catalog.centers = center_galaxies
+        return
         
     # function to convert spherical coordinates to cartesian coordinates
     def toCartesianVector(self, r, theta, phi):
@@ -517,167 +523,198 @@ class GeneralTools():
         return self.generate_rim(r, theta, phi, diagnostics)
 
     #
-    def generate_rim(self, r, theta, phi, diagnostics=False):
-        rim_rs     = []
-        rim_thetas = []
-        rim_phis   = []
-        distances  = [] 
-        len_n_center = len(r)
-        for i in range(len_n_center):
+    def generate_rim(self):
+        if self.catalog.rims is None:
+            rim_galaxies = {}
+        else:
+            rim_galaxies = self.catalog.rims
+            
+        for i in range(self.n_center):
+            curr_center_galaxy = self.catalog.centers["cen_{}".format(i)]
+            if len(curr_center_galaxy.childs) > 0:
+                curr_center_galaxy_childs = curr_center_galaxy.childs
+            else:
+                curr_center_galaxy_childs = []
             curr_rim_cnt = 0
             while curr_rim_cnt < self.n_rim:
                 curr_phi   = np.random.uniform(0., 360., 1)
                 curr_theta = np.arccos(np.random.uniform(-1., 1., 1))*RAD2DEG-90.
                 curr_r     = self.generate_gaussian(self.r_BAO, self.sigma_r_BAO, 1)
-                """
-                print(curr_r[0], curr_theta[i], curr_phi[0],
-                      self.toCartesianVector(curr_r[0], curr_theta[0], curr_phi[0]),
-                      self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0]))
-                """
-                curr_rim   = (self.toCartesianVector(r[i], theta[i], phi[i]) + \
+                curr_rim   = (self.toCartesianVector(curr_center_galaxy.r, curr_center_galaxy.theta, curr_center_galaxy.phi) + \
                               self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0]))[0]
                 pixel      = hp.vec2pix(self.nside, x=curr_rim[0], y=curr_rim[1], z=curr_rim[2])
                 # apply angular acceptance.
                 if self.completeness[pixel] == 1:
                     curr_rim = self.fromCartesianVector(curr_rim)
-                    rim_rs.append(curr_rim[0])
-                    rim_thetas.append(curr_rim[1])
-                    rim_phis.append(curr_rim[2])
-                    distances.append(curr_r[0])
-                    self.mapping[i]["childs"][curr_rim_cnt] = {}
-                    self.mapping[i]["childs"][curr_rim_cnt]["r"]     = curr_rim[0]
-                    self.mapping[i]["childs"][curr_rim_cnt]["theta"] = curr_rim[1]
-                    self.mapping[i]["childs"][curr_rim_cnt]["phi"]   = curr_rim[2]
+                    rim_galaxies["rim_{}_{}".format(i, curr_rim_cnt)] = galaxy(theta=curr_rim[1], phi=curr_rim[2], r=curr_rim[0],
+                                                                               parent="cen_{}".format(i), TYPE=1)
+                    curr_center_galaxy_childs.append("rim_{}_{}".format(i, curr_rim_cnt))
                     curr_rim_cnt += 1
-        if diagnostics or self.diagnostics:
-            self.check_diagnostics_directory()
-            plt.hist(distances, bins=int(np.sqrt(len(distances))))
-            plt.xlabel("Distance from the center")
-            plt.title("Rim galaxies")
-            plt.savefig("diagnostics/distance_distribution_of_rim.pdf")
-        rim_rs       = np.array(rim_rs).flatten()
-        rim_thetas   = np.array(rim_thetas).flatten()
-        rim_phis     = np.array(rim_phis).flatten()
-        if diagnostics or self.diagnostics:
-            self.check_diagnostics_directory()
-            plt.hist(rim_rs)
-            plt.xlabel(r"r [Mpc]")
-            plt.title("Rim Galaxy")
-            plt.savefig("diagnostics/generated_rim_r.pdf")
-            plt.clf()
-            plt.hist(rim_thetas)
-            plt.xlabel(r"$\theta$ [deg]")
-            plt.title("Rim Galaxy")
-            plt.savefig("diagnostics/generated_rim_theta.pdf")
-            plt.clf()
-            plt.hist(rim_phis)
-            plt.xlabel(r"$\phi$ [deg]")
-            plt.title("Rim Galaxy")
-            plt.savefig("diagnostics/generated_rim_phi.pdf")
-        return rim_rs, rim_thetas, rim_phis
+            curr_center_galaxy.childs = curr_center_galaxy_childs
+        if self.catalog.rims is None:
+            self.catalog.rims = rim_galaxies
+        else:
+            self.catalog.rims.update(rim_galaxies)
+        return
 
-    def generate_flat_galaxies(self, diagnostics=False):
+    def generate_flat_galaxies(self):
         r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
+        flat_galaxies = {}
+        for i in range(self.n_flat):
+            flat_galaxies[i] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2)
+        self.catalog.flats = flat_galaxies
         return r_flat, theta_flat, phi_flat
     
-    def generate_clumps_from_file(self, filename, diagnostics=False):
+    def generate_clumps_from_file(self, filename):
         r, theta, phi = self.read_generated_file(filename)
-        return self.generate_clumps(r, theta, phi, diagnostics)
+        return self.generate_clumps(r, theta, phi)
     
-    def generate_clumps(self, r_centers, theta_centers, phi_centers, diagnostics=False):
+    def generate_clumps(self, add_clumps_to_rims = False):#, r_centers, theta_centers, phi_centers)
         # generate flat galaxies (will be returned and be added to the mocks later)
-        r_flat, theta_flat, phi_flat = self.generate_flat_galaxies()
-        total_num_galaxies           = len(r_centers) + len(r_flat)
+        if self.catalog.flats is None:
+            self.generate_flat_galaxies()
+        total_num_galaxies      = self.n_center + self.n_flat
+        total_num_centers       = self.n_center
+        if add_clumps_to_rims:
+            total_num_galaxies += self.n_center * self.n_rim
+            total_num_centers  += self.n_center * self.n_rim
         # generate a list to choose among the centers and flats
         if self.frac_f2c is None:
             galaxy_selection  = np.random.choice(np.arange(0, total_num_galaxies, 1), size=self.nr_clump)
-            num_center_clumps = len(galaxy_selection[galaxy_selection<len(r_centers)])
-            num_flat_clumps   = len(galaxy_selection[galaxy_selection>=len(r_centers)])
+            num_center_clumps = len(galaxy_selection[galaxy_selection<total_num_centers])
+            num_flat_clumps   = len(galaxy_selection[galaxy_selection>=total_num_centers])
         else:
             num_center_clumps = int(self.nr_clump / ( 1 + self.frac_f2c ))
             num_flat_clumps   = self.nr_clump - self.center_clumps
-        num_center_clums = num_center_clumps if num_center_clumps > 0 else 1
-        num_flat_clumps  = num_flat_clumps if num_flat_clumps > 0 else 1
-        # randomly choose indices from centers and flat for the clumps
-        rand_center_idx = np.random.randint(0, len(r_centers), num_center_clumps)
-        rand_flat_idx   = np.random.randint(0, len(r_flat),    num_flat_clumps)
-        selected_r_centers     = r_centers[rand_center_idx]
-        selected_theta_centers = theta_centers[rand_center_idx]
-        selected_phi_centers   = phi_centers[rand_center_idx]
-        selected_r_flats       = r_flat[rand_flat_idx]
-        selected_theta_flats   = theta_flat[rand_flat_idx]
-        selected_phi_flats     = phi_flat[rand_flat_idx]
+        num_center_clumps = num_center_clumps if num_center_clumps > 1 else 2
+        num_flat_clumps   = num_flat_clumps if num_flat_clumps > 1 else 2        
+        # randomly choose indices from centers for the clumps
         # generate the clump positions with respect to their origin (a center galaxu)
-        center_clump_rs     = []
-        center_clump_thetas = []
-        center_clump_phis   = []
-        distances           = []
-        for i in range(num_center_clumps):
-            curr_r_center     = selected_r_centers[i]
-            curr_theta_center = selected_theta_centers[i]
-            curr_phi_center   = selected_phi_centers[i]
-            clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump_center)))
-            clump_phi      = np.random.uniform(0., 360., self.n_clump_center)
-            clump_theta    = np.arccos(np.random.uniform(-1., 1., self.n_clump_center))*RAD2DEG-90.
+        if self.frac_c2r is None:
+            galaxy_selection  = np.random.choice(np.arange(0, total_num_centers, 1), size=num_center_clumps)
+            center_clumps_idx = galaxy_selection[galaxy_selection<self.n_center]
+            rim_clumps_idx    = galaxy_selection[galaxy_selection>=self.n_center]-self.n_center
+        else:
+            center_clumps_cnt = int(num_center_clumps / ( 1 + self.frac_c2r ))
+            rim_clumps_cnt    = num_center_clumps - center_clumps_cnt
+            center_clumps_idx = np.random.choice(np.arange(0, self.n_center, 1), size=center_clumps_cnt)
+            rim_clumps_idx    = np.random.choice(np.arange(0, self.n_center*self.n_rim, 1), size=rim_clumps_cnt)
+
+        # get the center clump object
+        if self.catalog.clumps_center is None:
+            clumps_center = {}
+        else:
+            clumps_center = self.catalog.clumps_center
+        
+        # generate the clumps around the center galaxies
+        for idx in center_clumps_idx:
+            # get the seed galaxy for placing clumps
+            curr_seed_galaxy = self.catalog.centers["cen_{}".format(idx)]
+            # get the list of already existing childs of the seed galaxy
+            # if there is none, then use an empty list
+            if len(curr_seed_galaxy.childs) > 0:
+                curr_seed_galaxy_childs = curr_seed_galaxy.childs
+            else:
+                curr_seed_galaxy_childs = []
+            # generate clump positions with respect to the seed galaxy
+            clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump_center)))
+            clump_phi        = np.random.uniform(0., 360., self.n_clump_center)
+            clump_theta      = np.arccos(np.random.uniform(-1., 1., self.n_clump_center))*RAD2DEG-90.
             for j in range(self.n_clump_center):
-                curr_clump   = (self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]) + \
-                                self.toCartesianVector(curr_r_center, curr_theta_center, curr_phi_center))
+                # calculate the absolute position of the clump galaxy
+                curr_clump   = (self.toCartesianVector(curr_seed_galaxy.r, curr_seed_galaxy.theta, curr_seed_galaxy.phi)[0] + \
+                                self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]))
+                # get the healpix pixel position to check with completeness map
                 pixel      = hp.vec2pix(self.nside, x=curr_clump[0], y=curr_clump[1], z=curr_clump[2])
-                # apply angular acceptance
                 if self.completeness[pixel] == 1:
+                    # convert the cartesian coordinates to spherical coordinates
                     curr_clump = self.fromCartesianVector(curr_clump)
-                    center_clump_rs.append(curr_clump[0])
-                    center_clump_thetas.append(curr_clump[1])
-                    center_clump_phis.append(curr_clump[2])
-                    distances.append(clump_r[j])
-        if diagnostics or self.diagnostics:
-            self.check_diagnostics_directory()
-            plt.clf()
-            distances = np.array(distances)
-            distances = distances[distances<=50]
-            plt.hist(distances, bins=int(np.sqrt(len(distances))), normed=True)
-            plt.xlabel("Distance from the galaxies")
-            plt.title("Center clump galaxies")
-            plt.savefig("diagnostics/distance_distribution_of_center_clumps.pdf")
-        center_clump_rs     = np.array(center_clump_rs)
-        center_clump_thetas = np.array(center_clump_thetas)
-        center_clump_phis   = np.array(center_clump_phis)
+                    curr_seed_galaxy_childs.append("cenClump_{}_-1_{}".format(idx, j))
+                    # append the new generated clump the object
+                    clumps_center["cenClump_{}_-1_{}".format(idx, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
+                                                                               parent="cen{}".format(idx), TYPE=3)
+            # replace the child list of the seed galaxy.
+            # it is safe, the new childs are appended to the existing list of childs
+            curr_seed_galaxy.childs = curr_seed_galaxy_childs
+
+        # generate the clumps around the rim galaxies (if they will be added)
+        for idx in rim_clumps_idx:
+            # calculate the index of the center galaxy of the corresponding rim galaxy
+            seed_idx1 = int((idx-self.n_center) % self.n_center)
+            # calculate the index of the rim galaxy with respect to the center galaxy
+            seed_idx2 = int((idx-self.n_center) / self.n_center)
+            # get the seed galaxy
+            curr_seed_galaxy = self.catalog.rims["rim_{}_{}".format(seed_idx1, seed_idx2)]
+            # get the list of childs of the seed galaxy
+            # if there is none, then use an empty list
+            if len(curr_seed_galaxy.childs) > 0:
+                curr_seed_galaxy_childs = curr_seed_galaxy.childs
+            else:
+                curr_seed_galaxy_childs = []
+            # generate clump positions with respect to the seed galaxy
+            clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump_center)))
+            clump_phi        = np.random.uniform(0., 360., self.n_clump_center)
+            clump_theta      = np.arccos(np.random.uniform(-1., 1., self.n_clump_center))*RAD2DEG-90.
+            for j in range(self.n_clump_center):
+                # calculate the absolute position of the clump galaxy
+                curr_clump   = (self.toCartesianVector(curr_seed_galaxy.r, curr_seed_galaxy.theta, curr_seed_galaxy.phi)[0] + \
+                                self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]))
+                # get the healpix pixel position to check with completeness map
+                pixel      = hp.vec2pix(self.nside, x=curr_clump[0], y=curr_clump[1], z=curr_clump[2])
+                if self.completeness[pixel] == 1:
+                    # convert the cartesian coordinates to spherical coordinates
+                    curr_clump = self.fromCartesianVector(curr_clump)
+                    curr_seed_galaxy_childs.append("cenClump_{}_{}_{}".format(seed_idx1, seed_idx2, j))
+                    # append the new generated clump the object
+                    clumps_center["cenClump_{}_{}_{}".format(seed_idx1, seed_idx2, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
+                                                                                                parent="rim_{}_{}".format(seed_idx1, seed_idx2), TYPE=3)
+            # replace the child list of the seed galaxy.
+            # it is safe, the new childs are appended to the existing list of childs
+            curr_seed_galaxy.childs = curr_seed_galaxy_childs
+        # update the catalog object as all the center clumps are generated
+        self.catalog.clumps_center = clumps_center
+        
+        # get the center clump object
+        if self.catalog.clumps_flat is None:
+            clumps_flat = {}
+        else:
+            clumps_flat = self.catalog.clumps_flat
+
+        # randomly choose indices from flats for the clumps
         # generate the clump positions with respect to their origin (a flat galaxy)
-        flat_clump_rs     = []
-        flat_clump_thetas = []
-        flat_clump_phis   = []
-        distances         = []
-        for i in range(num_flat_clumps):
-            curr_r_flat     = selected_r_flats[i]
-            curr_theta_flat = selected_theta_flats[i]
-            curr_phi_flat   = selected_phi_flats[i]
-            clump_r        = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump)))
-            clump_phi      = np.random.uniform(0., 360., self.n_clump)
-            clump_theta    = np.arccos(np.random.uniform(-1., 1., self.n_clump))*RAD2DEG-90.
+        rand_flat_idx          = np.random.randint(0, self.n_flat, num_flat_clumps)
+        for idx in rand_flat_idx:
+            # get the seed galaxy for placing clumps
+            curr_seed_galaxy = self.catalog.flats[idx]
+            # get the list of already existing childs of the seed galaxy
+            # if there is none, then use an empty list
+            if len(curr_seed_galaxy.childs) > 0:
+                curr_seed_galaxy_childs = curr_seed_galaxy.childs
+            else:
+                curr_seed_galaxy_childs = []
+            # generate clump positions with respect to the seed galaxy
+            clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump)))
+            clump_phi        = np.random.uniform(0., 360., self.n_clump)
+            clump_theta      = np.arccos(np.random.uniform(-1., 1., self.n_clump))*RAD2DEG-90.
             for j in range(self.n_clump):
+                # calculate the absolute position of the clump galaxy
                 curr_clump   = (self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]) + \
-                                self.toCartesianVector(curr_r_flat, curr_theta_flat, curr_phi_flat))[0]
-                pixel      = hp.vec2pix(self.nside, x=curr_clump[0], y=curr_clump[1], z=curr_clump[2])
+                                self.toCartesianVector(curr_seed_galaxy.r, curr_seed_galaxy.theta, curr_seed_galaxy.phi))[0]
+                # get the healpix pixel position to check with completeness map
+                pixel        = hp.vec2pix(self.nside, x=curr_clump[0], y=curr_clump[1], z=curr_clump[2])
                 # apply angular acceptance
                 if self.completeness[pixel] == 1:
+                    # convert the cartesian coordinates to spherical coordinates
                     curr_clump = self.fromCartesianVector(curr_clump)
-                    flat_clump_rs.append(curr_clump[0])
-                    flat_clump_thetas.append(curr_clump[1])
-                    flat_clump_phis.append(curr_clump[2])
-                    distances.append(clump_r[j])
-        if diagnostics or self.diagnostics:
-            self.check_diagnostics_directory()
-            plt.clf()
-            distances = np.array(distances)
-            distances = distances[distances<=50]
-            plt.hist(distances, bins=int(np.sqrt(len(distances))), normed=True)
-            plt.xlabel("Distance from the galaxies")
-            plt.title("Flat clump galaxies")
-            plt.savefig("diagnostics/distance_distribution_of_flat_clumps.pdf")
-        flat_clump_rs     = np.array(flat_clump_rs)
-        flat_clump_thetas = np.array(flat_clump_thetas)
-        flat_clump_phis   = np.array(flat_clump_phis)
-        return [center_clump_rs, center_clump_thetas, center_clump_phis],[flat_clump_rs, flat_clump_thetas, flat_clump_phis],[r_flat, theta_flat, phi_flat]
+                    curr_seed_galaxy_childs.append("flatClump_{}_-1_{}".format(idx, j))
+                    # append the new generated clump the object
+                    clumps_flat["flatClump_{}_-1_{}".format(idx, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
+                                                                              parent="flat{}".format(idx), TYPE=4)
+            # replace the child list of the seed galaxy.
+            # it is safe, the new childs are appended to the existing list of childs
+            curr_seed_galaxy.childs = curr_seed_galaxy_childs
+            # update the catalog object as all the center clumps are generated
+        self.catalog.clumps_flat = clumps_flat
 
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
