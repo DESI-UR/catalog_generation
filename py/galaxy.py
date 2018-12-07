@@ -3,7 +3,7 @@ TYPE_LUT = {0: "center", 1: "rim", 2: "flat", 3: "clump_center", 4: "clump_flat"
 
 class galaxy:
 
-    def __init__(self, name=None, theta=None, phi=None, r=None, childs=None, parent=None, TYPE=None):
+    def __init__(self, name=None, theta=None, phi=None, r=None, childs=[], parent=None, TYPE=None):
         self._name   = name
         self._theta  = theta
         self._phi    = phi
@@ -77,10 +77,12 @@ class galaxy:
         print("  Dist:   {}".format(self.r))
         if self.parent is not None:
             print("  Prnt:   {}".format(self.parent))
+        """
         try:
             print("  Childs: {}".format(len(self.childs)))
             if print_childs:
                 for i in range(len(self.childs)):
-                    self.childs[i].print_info()
+                    self.childs[i].print_info(print_childs=True)
         except:
             return
+        """

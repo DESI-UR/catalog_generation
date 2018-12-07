@@ -42,6 +42,3 @@ class catalog:
     @clumps_flat.setter
     def clumps_flat(self, clumps_flat):
         self._clumps_flat = clumps_flat
-
-    
-        
