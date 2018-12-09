@@ -69,7 +69,7 @@ class galaxy:
     def parent(self, parent):
         self._parent = parent
         
-    def print_info(self, print_childs=False):
+    def info(self):
         print("Galaxy ({})".format(TYPE_LUT[self._TYPE]))
         print("  Name:   {}".format(self.name))
         print("  RA:     {}".format(self.ra[0]))

@@ -561,7 +561,7 @@ class GeneralTools():
         r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
         flat_galaxies = {}
         for i in range(self.n_flat):
-            flat_galaxies[i] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2)
+            flat_galaxies["flat_{}".format(i)] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2)
         self.catalog.flats = flat_galaxies
         return r_flat, theta_flat, phi_flat
     
@@ -569,7 +569,7 @@ class GeneralTools():
         r, theta, phi = self.read_generated_file(filename)
         return self.generate_clumps(r, theta, phi)
     
-    def generate_clumps(self, add_clumps_to_rims = False):#, r_centers, theta_centers, phi_centers)
+    def generate_clumps(self, add_clumps_to_rims = False):
         # generate flat galaxies (will be returned and be added to the mocks later)
         if self.catalog.flats is None:
             self.generate_flat_galaxies()
@@ -632,7 +632,7 @@ class GeneralTools():
                     curr_seed_galaxy_childs.append("cenClump_{}_-1_{}".format(idx, j))
                     # append the new generated clump the object
                     clumps_center["cenClump_{}_-1_{}".format(idx, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
-                                                                               parent="cen{}".format(idx), TYPE=3)
+                                                                               parent="cen_{}".format(idx), TYPE=3)
             # replace the child list of the seed galaxy.
             # it is safe, the new childs are appended to the existing list of childs
             curr_seed_galaxy.childs = curr_seed_galaxy_childs
@@ -685,7 +685,7 @@ class GeneralTools():
         rand_flat_idx          = np.random.randint(0, self.n_flat, num_flat_clumps)
         for idx in rand_flat_idx:
             # get the seed galaxy for placing clumps
-            curr_seed_galaxy = self.catalog.flats[idx]
+            curr_seed_galaxy = self.catalog.flats["flat_{}".format(idx)]
             # get the list of already existing childs of the seed galaxy
             # if there is none, then use an empty list
             if len(curr_seed_galaxy.childs) > 0:
@@ -709,7 +709,7 @@ class GeneralTools():
                     curr_seed_galaxy_childs.append("flatClump_{}_-1_{}".format(idx, j))
                     # append the new generated clump the object
                     clumps_flat["flatClump_{}_-1_{}".format(idx, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
-                                                                              parent="flat{}".format(idx), TYPE=4)
+                                                                              parent="flat_{}".format(idx), TYPE=4)
             # replace the child list of the seed galaxy.
             # it is safe, the new childs are appended to the existing list of childs
             curr_seed_galaxy.childs = curr_seed_galaxy_childs
@@ -719,12 +719,8 @@ class GeneralTools():
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
 
-    def write_to_fits(self, col1, col2, col3, col4, col5, filename, coordinates=0):
+    def write_to_fits(self, filename, coordinates=0):
         col_defs = [['phi', 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
-        if coordinates == -1:
-            coordinates = self.coordinates
-        if coordinates == 1:
-            col1   = (90.-col1)
         use_col_defs = col_defs[coordinates]
         # We also write the output in fits format
         if os.path.isfile(filename):
