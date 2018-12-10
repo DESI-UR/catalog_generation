@@ -33,6 +33,14 @@ gt.generate_rim()
 # are defined in the configuration file.
 gt.generate_clumps(add_clumps_to_rims=True)
 
+# extra
+try:
+    gt.catalog.plot("cen_0")
+except:
+    skip_plot = True
+
 # Save the output
-save_items = {'catalog': gt.catalog}
-pickle.dump(save_items, open("testing.pkl", "wb"), protocol=-1)
+# there are two options for user. One output file is in fits format to be used with other TPCF codes
+# the other output is in pickle format and it stores detailed information about the mock catalog generated
+gt.write_to_fits()
+gt.write_to_pickle()
