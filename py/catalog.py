@@ -65,7 +65,7 @@ class catalog:
             rs.append(self.flats[key].r)
             decs.append(self.flats[key].dec)
             ras.append(self.flats[key].ra)
-            types.append(self,flats[key].TYPE)
+            types.append(self.flats[key].TYPE)
         for key in self.clumps_center:
             rs.append(self.clumps_center[key].r)
             decs.append(self.clumps_center[key].dec)
