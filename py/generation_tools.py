@@ -16,6 +16,7 @@ from astropy.cosmology import FlatLambdaCDM, z_at_value
 import astropy.units as u
 import sys
 import os
+import pickle
 from scipy.interpolate import interp1d
 
 from galaxy import galaxy
@@ -719,9 +720,35 @@ class GeneralTools():
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
 
-    def write_to_fits(self, filename, coordinates=0):
-        col_defs = [['phi', 'theta', 'z', 'weight'], ['ra', 'dec', 'z', 'weight']]
-        use_col_defs = col_defs[coordinates]
+    def write_to_pickle(self, filaname=None):
+        if filename is None:
+            filename = self.fname_mock.replace(".fits", ".pkl")
+        config = {}
+        config['H_0']         = self.H0
+        config['omega_m0']    = self.omega_m0
+        config['r_BAO']       = self.r_BAO
+        config['sig_r_BAO']   = self.sigma_r_BAO
+        config['gamma']       = self.gamma
+        config['r_0']         = self.r_0
+        config['n_rnd']       = self.n_rnd
+        config['n_center']    = self.n_center
+        config['n_rim']       = self.n_rim
+        config['n_flat']      = self.n_flat
+        config['nr_cl']       = self.nr_clump
+        config['n_cl']        = self.n_clump
+        config['n_cl_center'] = self.n_clump_center
+        config['frac_f2c']    = self.frac_f2c
+        config['frac_c2r']    = self.frac_c2r
+        save_items = {'catalog': self.catalog, 'config': config}
+        pickle.dump(save_items, open(filaname, "wb"), protocol=-1)
+
+    def write_to_fits(self, filename=None):
+        if filename is None:
+            filename = self.fname_mock
+        rs, ras, decs, types = self.catalog.flatten()
+        LUT = self.generate_LUT_r2z()
+        zs  = LUT(rs)
+        ws  = np.ones(len(zs))
         # We also write the output in fits format
         if os.path.isfile(filename):
             print("a file with the designated name already exists... please remove the file first")
@@ -740,11 +767,11 @@ class GeneralTools():
         header['nr_cl']       = self.nr_clump
         header['n_cl']        = self.n_clump
         header['n_cl_center'] = self.n_clump_center
-        col1 = fits.Column(name=use_col_defs[0], array=col1, format='E')
-        col2 = fits.Column(name=use_col_defs[1], array=col2, format='E')
-        col3 = fits.Column(name=use_col_defs[2], array=col3, format='E')
-        col4 = fits.Column(name=use_col_defs[3], array=col4, format='E')
-        col5 = fits.Column(name="TYPE", array=col5, format='J')
+        col1 = fits.Column(name="z", array=zs, format='E')
+        col2 = fits.Column(name="ra", array=ras, format='E')
+        col3 = fits.Column(name="dec", array=decs, format='E')
+        col4 = fits.Column(name="weight", array=ws, format='E')
+        col5 = fits.Column(name="TYPE", array=types, format='J')
         cols = fits.ColDefs([col1, col2, col3, col4, col5])
         hdu  = fits.BinTableHDU.from_columns(cols, header=header)
         hdu.writeto(filename)
