@@ -720,7 +720,7 @@ class GeneralTools():
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
 
-    def write_to_pickle(self, filaname=None):
+    def write_to_pickle(self, filename=None):
         if filename is None:
             filename = self.fname_mock.replace(".fits", ".pkl")
         config = {}
