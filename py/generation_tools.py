@@ -740,7 +740,7 @@ class GeneralTools():
         config['frac_f2c']    = self.frac_f2c
         config['frac_c2r']    = self.frac_c2r
         save_items = {'catalog': self.catalog, 'config': config}
-        pickle.dump(save_items, open(filaname, "wb"), protocol=-1)
+        pickle.dump(save_items, open(filename, "wb"), protocol=-1)
 
     def write_to_fits(self, filename=None):
         if filename is None:
