@@ -120,6 +120,10 @@ class GeneralTools():
         self.n_flat         = int(self.config.get('Gen Params','n_flat'))
         self.nr_clump       = int(self.config.get('Gen Params','nr_clump'))
         try:
+            self.clump_dist = int(self.config.get('Gen Params','clump_dist'))
+        except:
+            self.clump_dist = 0
+        try:
             self.frac_f2c   = int(self.config.get('Gen Params','frac_f2c'))
         except:
             self.frac_f2c   = None
@@ -537,10 +541,13 @@ class GeneralTools():
             else:
                 curr_center_galaxy_childs = []
             curr_rim_cnt = 0
+
             while curr_rim_cnt < self.n_rim:
                 curr_phi   = np.random.uniform(0., 360., 1)
                 curr_theta = np.arccos(np.random.uniform(-1., 1., 1))*RAD2DEG-90.
                 curr_r     = self.generate_gaussian(self.r_BAO, self.sigma_r_BAO, 1)
+                curr_rim_wrt_center = self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0])
+                
                 curr_rim   = (self.toCartesianVector(curr_center_galaxy.r, curr_center_galaxy.theta, curr_center_galaxy.phi) + \
                               self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0]))[0]
                 pixel      = hp.vec2pix(self.nside, x=curr_rim[0], y=curr_rim[1], z=curr_rim[2])
@@ -618,9 +625,13 @@ class GeneralTools():
             else:
                 curr_seed_galaxy_childs = []
             # generate clump positions with respect to the seed galaxy
-            clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump_center)))
-            clump_phi        = np.random.uniform(0., 360., self.n_clump_center)
-            clump_theta      = np.arccos(np.random.uniform(-1., 1., self.n_clump_center))*RAD2DEG-90.
+            if self.clump_dist == 0:
+                n_clump_to_inject = self.n_clump_center
+            else:
+                n_clump_to_inject = np.random.poisson(self.n_clump_center)
+            clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, n_clump_to_inject)))#self.n_clump_center)))
+            clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)#self.n_clump_center)
+            clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.#self.n_clump_center))*RAD2DEG-90.
             for j in range(self.n_clump_center):
                 # calculate the absolute position of the clump galaxy
                 curr_clump   = (self.toCartesianVector(curr_seed_galaxy.r, curr_seed_galaxy.theta, curr_seed_galaxy.phi)[0] + \
@@ -653,9 +664,13 @@ class GeneralTools():
             else:
                 curr_seed_galaxy_childs = []
             # generate clump positions with respect to the seed galaxy
-            clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump_center)))
-            clump_phi        = np.random.uniform(0., 360., self.n_clump_center)
-            clump_theta      = np.arccos(np.random.uniform(-1., 1., self.n_clump_center))*RAD2DEG-90.
+            if self.clump_dist == 0:
+                n_clump_to_inject = self.n_clump_center
+            else:
+                n_clump_to_inject = np.random.poisson(self.n_clump_center)
+            clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, n_clump_to_inject)))#self.n_clump_center)))
+            clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)#self.n_clump_center)
+            clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.#self.n_clump_center))*RAD2DEG-90.
             for j in range(self.n_clump_center):
                 # calculate the absolute position of the clump galaxy
                 curr_clump   = (self.toCartesianVector(curr_seed_galaxy.r, curr_seed_galaxy.theta, curr_seed_galaxy.phi)[0] + \
@@ -694,9 +709,13 @@ class GeneralTools():
             else:
                 curr_seed_galaxy_childs = []
             # generate clump positions with respect to the seed galaxy
-            clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, self.n_clump)))
-            clump_phi        = np.random.uniform(0., 360., self.n_clump)
-            clump_theta      = np.arccos(np.random.uniform(-1., 1., self.n_clump))*RAD2DEG-90.
+            if self.clump_dist == 0:
+                n_clump_to_inject = self.n_clump
+            else:
+                n_clump_to_inject = np.random.poisson(self.n_clump)            
+            clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, n_clump_to_inject)))#self.n_clump)))
+            clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)#self.n_clump)
+            clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.#self.n_clump))*RAD2DEG-90.
             for j in range(self.n_clump):
                 # calculate the absolute position of the clump galaxy
                 curr_clump   = (self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]) + \
