@@ -22,23 +22,14 @@ gt = GeneralTools(sys.argv[1])#"../data/catgen_nb_randoms.cfg")
 # The function (generate_galaxies) is used to generate the galaxies in the mock catalog. User can choose either to use a
 # uniform distribution in r in [r_min, r_max] or use the distribution of r from the provided template. The example below show
 # the latter use. For the former, one needs to provide the argument 'uniform=True' in the function.
+r_flat, theta_flat, phi_flat = gt.generate_flat_galaxies(is_random=True)
 
-r_flat, theta_flat, phi_flat = gt.generate_flat_galaxies()
-print("Number of center galaxies: {}".format(len(r_flat)))
+# Save the output
+# there are two options for user. One output file is in fits format to be used with other TPCF codes
+# the other output is in pickle format and it stores detailed information about the mock catalog generated
+gt.write_to_fits(is_random=True)
 
-# Before finalizing the mock, distances are converted to redshift.
-# Then z-acceptance is applied to the generated galaxies
-r2z_function = gt.generate_LUT_r2z()
-# first, the center galaxies:
-z_flat     = r2z_function(r_flat)
-z_acceptance = z_flat<=gt.z_max 
-z_flat     = z_flat[z_acceptance]
-theta_flat = theta_flat[z_acceptance]
-phi_flat   = phi_flat[z_acceptance]
-
-all_zs     = z_flat
-all_thetas = theta_flat
-all_phis   = phi_flat
-all_types  = np.full(len(z_flat), 4)
-
-gt.write_to_fits(col1=all_phis, col2=all_thetas, col3=all_zs, col4=np.ones(len(all_zs)), col5=all_types, filename=gt.fname_random, coordinates=1)
+# If the user want to store everything is the catalog structure (galaxies with their corresponding rims, clumps and all)
+# the user can uncomment the following line. Be cautious that this requires considerable memory and it may fail if used on
+# simple laptop or desktop computer
+#gt.write_to_pickle()

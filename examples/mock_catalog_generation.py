@@ -33,7 +33,8 @@ gt.generate_rim()
 # are defined in the configuration file.
 gt.generate_clumps(add_clumps_to_rims=True)
 
-# extra
+# This is an example of how one can plot a center galaxy with its rims and clumps
+# Another example about this plotting option is on a python notebook
 try:
     gt.catalog.plot("cen_0")
 except:
@@ -43,4 +44,8 @@ except:
 # there are two options for user. One output file is in fits format to be used with other TPCF codes
 # the other output is in pickle format and it stores detailed information about the mock catalog generated
 gt.write_to_fits()
-gt.write_to_pickle()
+
+# If the user want to store everything is the catalog structure (galaxies with their corresponding rims, clumps and all)
+# the user can uncomment the following line. Be cautious that this requires considerable memory and it may fail if used on
+# simple laptop or desktop computer
+#gt.write_to_pickle()
