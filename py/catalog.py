@@ -51,31 +51,46 @@ class catalog:
         decs   = []
         ras    = []
         types  = []
-        for key in self.centers:
-            rs.append(self.centers[key].r)
-            decs.append(self.centers[key].dec)
-            ras.append(self.centers[key].ra)
-            types.append(self.centers[key].TYPE)
-        for key in self.rims:
-            rs.append(self.rims[key].r)
-            decs.append(self.rims[key].dec)
-            ras.append(self.rims[key].ra)
-            types.append(self.rims[key].TYPE)
-        for key in self.flats:
-            rs.append(self.flats[key].r)
-            decs.append(self.flats[key].dec)
-            ras.append(self.flats[key].ra)
-            types.append(self.flats[key].TYPE)
-        for key in self.clumps_center:
-            rs.append(self.clumps_center[key].r)
-            decs.append(self.clumps_center[key].dec)
-            ras.append(self.clumps_center[key].ra)
-            types.append(self.clumps_center[key].TYPE)
-        for key in self.clumps_flat:
-            rs.append(self.clumps_flat[key].r)
-            decs.append(self.clumps_flat[key].dec)
-            ras.append(self.clumps_flat[key].ra)
-            types.append(self.clumps_flat[key].TYPE)
+        try:
+            for key in self.centers:
+                rs.append(self.centers[key].r)
+                decs.append(self.centers[key].dec)
+                ras.append(self.centers[key].ra)
+                types.append(self.centers[key].TYPE)
+        except:
+            no_centers = True
+        try:
+            for key in self.rims:
+                rs.append(self.rims[key].r)
+                decs.append(self.rims[key].dec)
+                ras.append(self.rims[key].ra)
+                types.append(self.rims[key].TYPE)
+        except:
+            no_rims = True
+        try:
+            for key in self.flats:
+                rs.append(self.flats[key].r)
+                decs.append(self.flats[key].dec)
+                ras.append(self.flats[key].ra)
+                types.append(self.flats[key].TYPE)
+        except:
+            no_flats = True
+        try:
+            for key in self.clumps_center:
+                rs.append(self.clumps_center[key].r)
+                decs.append(self.clumps_center[key].dec)
+                ras.append(self.clumps_center[key].ra)
+                types.append(self.clumps_center[key].TYPE)
+        except:
+            no_cc = True
+        try:
+            for key in self.clumps_flat:
+                rs.append(self.clumps_flat[key].r)
+                decs.append(self.clumps_flat[key].dec)
+                ras.append(self.clumps_flat[key].ra)
+                types.append(self.clumps_flat[key].TYPE)
+        except:
+            no_cf = True
         return rs, ras, decs, types
 
     def plot(self, idx):

@@ -596,7 +596,7 @@ class GeneralTools():
             print("generating flat galaxies for random catalog")
             r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_rand)
         flat_galaxies = {}
-        for i in range(self.n_flat):
+        for i in range(len(r_flat)):
             flat_galaxies["flat_{}".format(i)] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2)
         self.catalog.flats = flat_galaxies
         return r_flat, theta_flat, phi_flat
