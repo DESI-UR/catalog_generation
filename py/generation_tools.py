@@ -114,7 +114,7 @@ class GeneralTools():
         self.sigma_r_BAO    = float(self.config.get('Gen Params','sigr_bao'))
         self.gamma          = float(self.config.get('Gen Params','gamma'))
         self.r_0            = float(self.config.get('Gen Params','r_0'))
-        self.n_rnd          = int(self.config.get('Gen Params','n_rand'))
+        self.n_rand         = int(self.config.get('Gen Params','n_rand'))
         self.n_center       = int(self.config.get('Gen Params','n_center'))
         self.n_rim          = int(self.config.get('Gen Params','n_rim'))
         self.n_flat         = int(self.config.get('Gen Params','n_flat'))
@@ -186,7 +186,7 @@ class GeneralTools():
         z_max = 3.0
         zs = np.linspace(z_min, z_max, 1000)
         rs = [r.value for r in self.cosmo.comoving_distance(zs)]
-        interpolator = interp1d(rs, zs, bounds_error=False, fill_value=-1.)
+        interpolator = interp1d(rs, zs, bounds_error=False, fill_value=-9999.)
         return interpolator            
 
     """
@@ -203,12 +203,13 @@ class GeneralTools():
     def get_template(self):
         self.hdulist      = fits.open(self.datafile)
         self.data_z       = self.hdulist[1].data['Z']
-        template_cut = np.array([(self.data_z[i] < self.z_max+0.125) and (self.data_z[i] > self.z_min) for i in range(len(self.data_z))])
+        #template_cut = np.array([(self.data_z[i] < self.z_max+0.125) and (self.data_z[i] > self.z_min) for i in range(len(self.data_z))])
+        template_cut = np.logical_and(self.data_z<(self.z_max+0.125), self.data_z>self.z_min)
         self.template_z   = self.data_z[template_cut]
         try:
             self.template_w = self.hdulist[1].data['HistoW'][template_cut]
         except:
-            self.template_w = None
+            self.template_w = np.full(len(self.template_z), fill_value=1.)
         self.template_r   = [r.value for r in self.cosmo.comoving_distance(self.template_z)]
         self.template_r_len = len(self.template_r)
         self.template_r_min = np.amin(self.template_r)
@@ -373,18 +374,20 @@ class GeneralTools():
             template_w   = self.template_w[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
             template_z   = template_z[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
             num_bins     = len(template_w)
-            n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True, weights=template_w)
+            n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True, weights=template_w,
+                                        range=(self.z_min, self.z_max))
         else:
             template_z   = template_z[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
             num_bins     = int(np.sqrt(len(template_z)))
-            n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True)
+            n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True, range=(self.z_min, self.z_max))
         n            = n.astype(float)
         z_med        = (z_edges[:-1] + z_edges[1:])/2.
         halfbinsize  = (z_edges[1] - z_edges[0])/2.
-        interpolator = interp1d(z_med, n, bounds_error=False, fill_value=0.)
-
+        interpolator = interp1d(z_med, n, bounds_error=False, fill_value=-1.)
+        
         num_z_test           = len(z_test)
-        n_test, z_test_edges = np.histogram(z_test, bins=int(np.sqrt(num_z_test)), normed=True)
+        n_test, z_test_edges = np.histogram(z_test, bins=int(np.sqrt(num_z_test)),
+                                            range=(self.z_min, self.z_max), normed=True)
         n_test               = n_test.astype(float)
         z_test_med           = (z_test_edges[:-1] + z_test_edges[1:])/2.
         interpolator_test    = interp1d(z_test_med, n_test, bounds_error=False, fill_value=0.)
@@ -393,9 +396,14 @@ class GeneralTools():
         p2  = interpolator_test(z_test)
         acc = [np.random.uniform(0, p) for p in p2]
 
+        passed_acceptance = np.logical_and(np.logical_and(p1>acc, z_test<=self.z_max), z_test>=self.z_min)
+        print(np.min(z_test[passed_acceptance]), np.max(z_test[passed_acceptance]))
+        
         if self.acceptance:
-            return p1>acc
+            print("applying the z acceptance...")
+            return passed_acceptance
         else:
+            print("not applying z acceptance...")
             return np.full(len(p1), True)
 
     """
@@ -492,11 +500,26 @@ class GeneralTools():
         return curr_vector
 
     # function to convert spherical coordinates to cartesian coordinates with eccentricity (to mimick anisotropy)
-    def toCartesianVector2(self, r, theta, phi):
+    def toCartesianVector2(self, r, theta, phi, center_theta=None, center_phi=None):
         #unit_vector = hp.pix2vec(self.nside, hp.ang2pix(self.nside, theta, phi, lonlat=True))
         unit_vector = hp.ang2vec(phi, theta, lonlat=True)
-        curr_vector = (r * np.asarray(unit_vector)) * self.anisotropy_scale
-        return curr_vector
+        curr_vector = np.asarray(unit_vector) * self.anisotropy_scale
+        if center_theta is not None and center_phi is not None:
+            angles = hp.vec2ang(curr_vector, lonlat=True)
+            # rotate the positions with respect to the corresponding centers
+            rotated_angles = angles + np.asarray([center_phi, center_theta])
+            # in some cases, angles need to be corrected for the boundaries
+            if rotated_angles[0] > 360.:
+                rotated_angles[0] -= 360.
+            if rotated_angles[0] < 0.:
+                rotated_angles[0] += 360.
+            if rotated_angles[1] < 0.:
+                rotated_angles[1] += 180.
+            if rotated_angles[1] > 180.:
+                rotated_angles[1] -= 180.
+            curr_vector = np.asarray(hp.ang2vec(rotated_angles[1]*DEG2RAD, rotated_angles[0]*DEG2RAD))
+        # multiply by the distance to get the proper coordinates
+        return r*curr_vector
         
     # function to convert cartesian coordinates to spherical coordinates
     def fromCartesianVector(self, vec):
@@ -546,10 +569,11 @@ class GeneralTools():
                 curr_phi   = np.random.uniform(0., 360., 1)
                 curr_theta = np.arccos(np.random.uniform(-1., 1., 1))*RAD2DEG-90.
                 curr_r     = self.generate_gaussian(self.r_BAO, self.sigma_r_BAO, 1)
-                curr_rim_wrt_center = self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0])
-                
+                curr_rim_wrt_center = self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0],
+                                                              center_theta=curr_center_galaxy.theta, center_phi=curr_center_galaxy.phi)
                 curr_rim   = (self.toCartesianVector(curr_center_galaxy.r, curr_center_galaxy.theta, curr_center_galaxy.phi) + \
-                              self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0]))[0]
+                              curr_rim_wrt_center )[0] #self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0]))[0]
+                #print(self.toCartesianVector(curr_center_galaxy.r, curr_center_galaxy.theta, curr_center_galaxy.phi), curr_rim_wrt_center)
                 pixel      = hp.vec2pix(self.nside, x=curr_rim[0], y=curr_rim[1], z=curr_rim[2])
                 # apply angular acceptance.
                 if self.completeness[pixel] == 1:
@@ -565,8 +589,12 @@ class GeneralTools():
             self.catalog.rims.update(rim_galaxies)
         return
 
-    def generate_flat_galaxies(self):
-        r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
+    def generate_flat_galaxies(self, is_random=False):
+        if is_random is False:
+            r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_flat)
+        else:
+            print("generating flat galaxies for random catalog")
+            r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_rand)
         flat_galaxies = {}
         for i in range(self.n_flat):
             flat_galaxies["flat_{}".format(i)] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2)
@@ -749,7 +777,7 @@ class GeneralTools():
         config['sig_r_BAO']   = self.sigma_r_BAO
         config['gamma']       = self.gamma
         config['r_0']         = self.r_0
-        config['n_rnd']       = self.n_rnd
+        config['n_rand']      = self.n_rand
         config['n_center']    = self.n_center
         config['n_rim']       = self.n_rim
         config['n_flat']      = self.n_flat
@@ -761,13 +789,24 @@ class GeneralTools():
         save_items = {'catalog': self.catalog, 'config': config}
         pickle.dump(save_items, open(filename, "wb"), protocol=-1)
 
-    def write_to_fits(self, filename=None):
+    def write_to_fits(self, filename=None, is_random=False):
         if filename is None:
-            filename = self.fname_mock
+            if not is_random:
+                filename = self.fname_mock
+            else:
+                filename = self.fname_random
         rs, ras, decs, types = self.catalog.flatten()
         LUT = self.generate_LUT_r2z()
         zs  = LUT(rs)
         ws  = np.ones(len(zs))
+        # acceptance test here. should it be done for individual types?
+        if self.acceptance:
+            accepted_indices = self.check_z_acceptance(zs)
+            zs    = np.asarray(zs)[accepted_indices]
+            ras   = np.asarray(ras)[accepted_indices]
+            decs  = np.asarray(decs)[accepted_indices]
+            types = np.asarray(types)[accepted_indices]
+            ws    = np.asarray(ws)[accepted_indices]
         # We also write the output in fits format
         if os.path.isfile(filename):
             print("a file with the designated name already exists... please remove the file first")
@@ -779,7 +818,7 @@ class GeneralTools():
         header['sig_r_BAO']   = self.sigma_r_BAO
         header['gamma']       = self.gamma
         header['r_0']         = self.r_0
-        header['n_rnd']       = self.n_rnd
+        header['n_rand']      = self.n_rand
         header['n_center']    = self.n_center
         header['n_rim']       = self.n_rim
         header['n_flat']      = self.n_flat
