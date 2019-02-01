@@ -133,9 +133,11 @@ class GeneralTools():
             self.frac_c2r   = None
         try:
             self.a          = float(self.config.get('Gen Params','a'))
+            self.b          = float(self.config.get('Gen Params','b'))
             self.c          = float(self.config.get('Gen Params','c'))
         except:
             self.a          = 1.
+            self.b          = 1.
             self.c          = 1.
         self.n_clump        = int(self.config.get('Gen Params','n_clump'))
         self.n_clump_center = int(self.config.get('Gen Params','n_centerclump'))
@@ -143,13 +145,15 @@ class GeneralTools():
             self.z_min      = float(self.config.get("Gen Params", "z_min"))
             self.z_max      = float(self.config.get("Gen Params", "z_max"))
         except:
-            print("using predefined z bounds")
+            print("using predefined z bounds [0.4, 0.7]")
             self.z_min      = 0.4
             self.z_max      = 0.7
         self.r_max      = self.cosmo.comoving_distance(self.z_max).value
         self.r_min      = self.cosmo.comoving_distance(self.z_min).value
         
-        self.anisotropy_scale = np.array([self.a, self.c, self.a])
+        self.anisotropy_scale = np.array([self.a, self.b, self.c])
+
+        print("anisotropy scale is : {}".format(self.anisotropy_scale))
 
     """
     Function to generate a lookup table for z to r conversion
@@ -504,7 +508,7 @@ class GeneralTools():
         #unit_vector = hp.pix2vec(self.nside, hp.ang2pix(self.nside, theta, phi, lonlat=True))
         unit_vector = hp.ang2vec(phi, theta, lonlat=True)
         curr_vector = np.asarray(unit_vector) * self.anisotropy_scale
-        if center_theta is not None and center_phi is not None:
+        if (center_theta is not None) and (center_phi is not None):
             angles = hp.vec2ang(curr_vector, lonlat=True)
             # rotate the positions with respect to the corresponding centers
             rotated_angles = angles + np.asarray([center_phi, center_theta])
@@ -520,6 +524,35 @@ class GeneralTools():
             curr_vector = np.asarray(hp.ang2vec(rotated_angles[1]*DEG2RAD, rotated_angles[0]*DEG2RAD))
         # multiply by the distance to get the proper coordinates
         return r*curr_vector
+
+    # function to calculate the rotation matrix for a given galaxy
+    def calculateRotationMatrix(self, theta, phi, lonlat=True):
+        curr_position = hp.ang2vec(phi, theta, lonlat=lonlat)[0]
+        # for convenience, we will keep the units in radians for now
+        rot_x         = np.arccos(np.dot([1., 0., 0.], curr_position))
+        rot_y         = np.arccos(np.dot([0., 1., 0.], curr_position))
+        rot_z         = np.arccos(np.dot([0., 0., 1.], curr_position))
+        R_x           = np.asarray([[1., 0., 0.],
+                                    [0., np.cos(rot_x), -np.sin(rot_x)],
+                                    [0., np.sin(rot_x), np.cos(rot_x)]])
+        R_y           = np.asarray([[np.cos(rot_y),  0., np.sin(rot_y)],
+                                    [0.,             1., 0.],
+                                    [-np.sin(rot_y), 0., np.cos(rot_y)]])
+        R_z           = np.asarray([[np.cos(rot_z), -np.sin(rot_z), 0.],
+                                    [np.sin(rot_z), np.cos(rot_z),  0.],
+                                    [0.,            0.,             1.]])
+        rotation_matrix = np.matmul(R_z, np.matmul(R_y, R_x))
+        return rotation_matrix
+        
+    # function to convert spherical coordinates to cartesian coordinates with eccentricity (to mimick anisotropy)
+    def toCartesianVector3(self, r, theta, phi, center_theta=None, center_phi=None):
+        unit_vector = hp.ang2vec(phi, theta, lonlat=True)
+        curr_vector = np.asarray(r * self.anisotropy_scale * np.asarray(unit_vector))
+        if center_theta is not None and center_phi is not None:
+            rotationMatrix = self.calculateRotationMatrix(center_theta, center_phi)
+            return np.matmul(rotationMatrix, curr_vector.transpose())
+        else:
+            return curr_vector
         
     # function to convert cartesian coordinates to spherical coordinates
     def fromCartesianVector(self, vec):
@@ -569,11 +602,10 @@ class GeneralTools():
                 curr_phi   = np.random.uniform(0., 360., 1)
                 curr_theta = np.arccos(np.random.uniform(-1., 1., 1))*RAD2DEG-90.
                 curr_r     = self.generate_gaussian(self.r_BAO, self.sigma_r_BAO, 1)
-                curr_rim_wrt_center = self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0],
+                curr_rim_wrt_center = self.toCartesianVector3(curr_r[0], curr_theta[0], curr_phi[0],
                                                               center_theta=curr_center_galaxy.theta, center_phi=curr_center_galaxy.phi)
                 curr_rim   = (self.toCartesianVector(curr_center_galaxy.r, curr_center_galaxy.theta, curr_center_galaxy.phi) + \
-                              curr_rim_wrt_center )[0] #self.toCartesianVector2(curr_r[0], curr_theta[0], curr_phi[0]))[0]
-                #print(self.toCartesianVector(curr_center_galaxy.r, curr_center_galaxy.theta, curr_center_galaxy.phi), curr_rim_wrt_center)
+                              curr_rim_wrt_center )[0]
                 pixel      = hp.vec2pix(self.nside, x=curr_rim[0], y=curr_rim[1], z=curr_rim[2])
                 # apply angular acceptance.
                 if self.completeness[pixel] == 1:
@@ -581,7 +613,7 @@ class GeneralTools():
                     rim_galaxies["rim_{}_{}".format(i, curr_rim_cnt)] = galaxy(theta=curr_rim[1], phi=curr_rim[2], r=curr_rim[0],
                                                                                parent="cen_{}".format(i), TYPE=1)
                     curr_center_galaxy_childs.append("rim_{}_{}".format(i, curr_rim_cnt))
-                    curr_rim_cnt += 1
+                    curr_rim_cnt += 1                
             curr_center_galaxy.childs = curr_center_galaxy_childs
         if self.catalog.rims is None:
             self.catalog.rims = rim_galaxies
@@ -660,7 +692,7 @@ class GeneralTools():
             clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, n_clump_to_inject)))#self.n_clump_center)))
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)#self.n_clump_center)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.#self.n_clump_center))*RAD2DEG-90.
-            for j in range(self.n_clump_center):
+            for j in range(n_clump_to_inject):
                 # calculate the absolute position of the clump galaxy
                 curr_clump   = (self.toCartesianVector(curr_seed_galaxy.r, curr_seed_galaxy.theta, curr_seed_galaxy.phi)[0] + \
                                 self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]))
@@ -699,7 +731,7 @@ class GeneralTools():
             clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, n_clump_to_inject)))#self.n_clump_center)))
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)#self.n_clump_center)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.#self.n_clump_center))*RAD2DEG-90.
-            for j in range(self.n_clump_center):
+            for j in range(n_clump_to_inject):
                 # calculate the absolute position of the clump galaxy
                 curr_clump   = (self.toCartesianVector(curr_seed_galaxy.r, curr_seed_galaxy.theta, curr_seed_galaxy.phi)[0] + \
                                 self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]))
@@ -744,7 +776,7 @@ class GeneralTools():
             clump_r          = (self.r_0**self.gamma * (np.random.pareto(self.gamma-1, n_clump_to_inject)))#self.n_clump)))
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)#self.n_clump)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.#self.n_clump))*RAD2DEG-90.
-            for j in range(self.n_clump):
+            for j in range(n_clump_to_inject):
                 # calculate the absolute position of the clump galaxy
                 curr_clump   = (self.toCartesianVector(clump_r[j], clump_theta[j], clump_phi[j]) + \
                                 self.toCartesianVector(curr_seed_galaxy.r, curr_seed_galaxy.theta, curr_seed_galaxy.phi))[0]
@@ -825,6 +857,8 @@ class GeneralTools():
         header['nr_cl']       = self.nr_clump
         header['n_cl']        = self.n_clump
         header['n_cl_center'] = self.n_clump_center
+        header['a']           = self.a
+        header['c']           = self.c
         col1 = fits.Column(name="z", array=zs, format='E')
         col2 = fits.Column(name="ra", array=ras, format='E')
         col3 = fits.Column(name="dec", array=decs, format='E')
