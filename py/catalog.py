@@ -94,12 +94,18 @@ class catalog:
         return rs, ras, decs, types
 
     def plot(self, idx):
+        # the position of the galaxy with idx is retrieved first
+        # the position of the other galaxies will be plotted with respect to this galaxy
+        x_cen, y_cen, z_cen, b_cen = self.get_points(idx)
         from mpl_toolkits.mplot3d import Axes3D
         import matplotlib.pyplot as plt
         fig = plt.figure()
         ax  = fig.add_subplot(111, projection='3d')
         x, y, z, c = self.get_points(idx, get_childs=True)
-        ax.scatter(xs=np.asarray(x).flatten(), ys=np.asarray(y).flatten(), zs=np.asarray(z).flatten(), c=c, s=6)
+        ax.scatter(xs=np.asarray(x).flatten()-x_cen[0],
+                   ys=np.asarray(y).flatten()-y_cen[0],
+                   zs=np.asarray(z).flatten()-z_cen[0],
+                   c=c, s=6)
         plt.show()
         
     def get_points(self, idx, get_childs=False):
