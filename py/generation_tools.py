@@ -71,6 +71,30 @@ class GeneralTools():
         
 
     """
+    Function to read and process a line in configuration. 
+    This is needed because the user may input parameters with dimensions.
+    For example, the user can either define the BAO radius in Mpc or in h^-1*Mpc
+    
+    Parameters
+    ----------
+    config_line: string
+         a line read by configparser to be processed for unit and dimension
+
+    Returns
+    -------
+    quantity: astropy.units.Quantity
+         value of the parameter in the configparser line. If the unit is given, it will be taken into account
+    """
+    def read_config_line(self, config_line):
+        try:
+            quantity = u.Quantity(config_line)
+        except:
+            raise Exception('the value provided for the following line is invalid'
+                            '{}'
+                            'Please check for correct syntax, either a real number or a quantity with unit'.format(config_line))
+        return quantity
+    
+    """
     Function to set the parameters of the object using the configuration file.
 
     Parameters
@@ -90,7 +114,16 @@ class GeneralTools():
         self.num_mock   = int(self.config.get("N Catalogs", "nmock"))
         
         # read in the cosmology parameters to generate the mocks
-        self.H0        = float(self.config.get("Cosmology", "H_0"))
+        H0             = self.read_config_line(self.config.get("Cosmology", "H_0"))
+        if H0.unit == u.dimensionless_unscaled:
+            # if the unit is not given for H0, then it should be h0.
+            # that needs to be changed to H0
+            self.h0    = H0
+            self.H0    = H0 * 100.
+        else:
+            # if the unit is given for H0, then it should be H0.
+            self.h0    = H0.to("Mpc").value/100.
+            self.H0    = H0.to("Mpc").value
         self.omega_m0  = float(self.config.get("Cosmology", "omega_m0"))
         self.omega_b0  = float(self.config.get("Cosmology", "omega_b0"))
         self.omega_de0 = float(self.config.get("Cosmology", "omega_de0"))
@@ -110,10 +143,25 @@ class GeneralTools():
         self.coordinates  = int(self.config.get("Data Format", "coordinates"))
 
         # BAO related parameters
-        self.r_BAO          = float(self.config.get('Gen Params','r_bao'))
-        self.sigma_r_BAO    = float(self.config.get('Gen Params','sigr_bao'))
+        r_BAO               = self.read_config_line(self.config.get('Gen Params','r_bao'))
+        if r_BAO.unit == u.dimensionless_unscaled:
+            # we need to change r_BAO so that it will have the unit of Mpc
+            self.r_BAO      = r_BAO/self.h0
+        else:
+            self.r_BAO      = r_BAO.to("Mpc").value
+        sigma_r_BAO         = self.read_config_line(self.config.get('Gen Params','sigr_bao'))
+        if sigma_r_BAO.unit == u.dimensionless_unscaled:
+            self.sigma_r_BAO= sigma_r_BAO/self.h0
+        else:
+            self.sigma_r_BAO= sigma_r_BAO.to("Mpc").value
+
+        # Clumping parameters
         self.gamma          = float(self.config.get('Gen Params','gamma'))
-        self.r_0            = float(self.config.get('Gen Params','r_0'))
+        r_0                 = self.read_config_line(self.config.get('Gen Params','r_0'))
+        if r_0.unit == u.dimensionless_unscaled:
+            self.r_0        = r_0/self.h0
+        else:
+            self.r_0        = r_0.to("Mpc").value
         self.n_rand         = int(self.config.get('Gen Params','n_rand'))
         self.n_center       = int(self.config.get('Gen Params','n_center'))
         self.n_rim          = int(self.config.get('Gen Params','n_rim'))
@@ -134,11 +182,9 @@ class GeneralTools():
         try:
             self.a          = float(self.config.get('Gen Params','a'))
             self.b          = float(self.config.get('Gen Params','b'))
-            self.c          = float(self.config.get('Gen Params','c'))
         except:
             self.a          = 1.
             self.b          = 1.
-            self.c          = 1.
         self.n_clump        = int(self.config.get('Gen Params','n_clump'))
         self.n_clump_center = int(self.config.get('Gen Params','n_centerclump'))
         try:
@@ -151,7 +197,7 @@ class GeneralTools():
         self.r_max      = self.cosmo.comoving_distance(self.z_max).value
         self.r_min      = self.cosmo.comoving_distance(self.z_min).value
         
-        self.anisotropy_scale = np.array([self.a, self.b, self.c])
+        self.anisotropy_scale = np.array([self.a, self.b, self.a])
 
         print("anisotropy scale is : {}".format(self.anisotropy_scale))
 
@@ -858,7 +904,7 @@ class GeneralTools():
         header['n_cl']        = self.n_clump
         header['n_cl_center'] = self.n_clump_center
         header['a']           = self.a
-        header['c']           = self.c
+        header['b']           = self.b
         col1 = fits.Column(name="z", array=zs, format='E')
         col2 = fits.Column(name="ra", array=ras, format='E')
         col3 = fits.Column(name="dec", array=decs, format='E')
