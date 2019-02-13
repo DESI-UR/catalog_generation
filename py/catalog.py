@@ -116,7 +116,7 @@ class catalog:
             z.append(curr_vector[2])
             c.append("b")
             if not get_childs:
-                return
+                return x, y, z, c
             for key in self.centers[idx].childs:
                 x_, y_, z_, c_ = self.get_points(key, get_childs)
                 x.append(x_[0])
@@ -131,7 +131,7 @@ class catalog:
             z.append(curr_vector[2])
             c.append("red")
             if not get_childs:
-                return
+                return x, y, z, c
             for key in self.rims[idx].childs:
                 x_, y_, z_, c_ = self.get_points(key, get_childs)
                 x.append(x_[0])
@@ -171,3 +171,17 @@ class catalog:
             self.clumps_center[idx].info()
         if len(idx.split("flatClump_"))>1:
             self.clumps_flat[idx].info()
+
+    def get_seed(self, idx):
+        split_idx = idx.split()
+        # first lets do the clumps, that is the hard one
+        if len(split_idx[0].split("cen"))>1:
+            # this means the seed is either a center galaxy or a rim galaxy
+            seed_type = "cen"
+            # decode the rest of the idx and find the respective seed
+            seed_idx1 = int(split_idx[1])
+            seed_idx2 = int(split_idx[2])
+            self.info("{}_{}".format(seed_type, seed_idx1), print_childs=True)
+        else:
+            # that means the seed is a flat galaxy
+            seed_type = "flat"
