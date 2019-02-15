@@ -28,9 +28,9 @@ env:
         # These packages will only be installed if we really need them.
         - CONDA_ALL_DEPENDENCIES=""
         # These packages will always be installed.
-        - PIP_DEPENDENCIES=""
+        #- PIP_DEPENDENCIES=""
         # These packages will only be installed if we really need them.
-        - PIP_ALL_DEPENDENCIES=""
+        #- PIP_ALL_DEPENDENCIES=""
         # Debug the Travis install process.
         - DEBUG=False
 
