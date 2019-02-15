@@ -1,0 +1,36 @@
+os:
+- linux
+
+# Travis tech support recommended trying sudo true for more stable builds.
+# Seems odd, but maybe they isolate us from other users more if we need sudo.
+sudo: false
+
+python:
+- 3.3
+- 3.5
+
+env:
+    global:
+        # The following versions are the 'default' for tests, unless
+        # overidden underneath. They are defined here in order to save having
+        # to repeat them for all configurations.
+        - NUMPY_VERSION=1.13.1
+        - SCIPY_VERSION=0.19.1
+        - ASTROPY_VERSION=1.2.1
+	- CONFIGPARSER_VERSION=3.5.0
+	- HEALPY_VERSION=1.11.0
+	- MATPLOTLIB_VERSION=2.0.0
+        - MAIN_CMD='cd examples; python mock_catalog_generation.py configs/RSD_mock.cfg'
+        # These packages will always be installed.
+        - CONDA_DEPENDENCIES="scipy pyyaml matplotlib healpy numpy configparser astropy"
+        # These packages will only be installed if we really need them.
+        - CONDA_ALL_DEPENDENCIES=""
+        # These packages will always be installed.
+        - PIP_DEPENDENCIES=""
+        # These packages will only be installed if we really need them.
+        - PIP_ALL_DEPENDENCIES=""
+        # Debug the Travis install process.
+        - DEBUG=False
+
+script:
+    - $MAIN_CMD
