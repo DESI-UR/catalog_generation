@@ -17,9 +17,9 @@ env:
         - NUMPY_VERSION=1.13.1
         - SCIPY_VERSION=0.19.1
         - ASTROPY_VERSION=1.2.1
-	- CONFIGPARSER_VERSION=3.5.0
-	- HEALPY_VERSION=1.11.0
-	- MATPLOTLIB_VERSION=2.0.0
+        - CONFIGPARSER_VERSION=3.5.0
+        - HEALPY_VERSION=1.11.0
+        - MATPLOTLIB_VERSION=2.0.0
         - MAIN_CMD='cd examples; python mock_catalog_generation.py configs/RSD_mock.cfg'
         # These packages will always be installed.
         - CONDA_DEPENDENCIES="scipy pyyaml matplotlib healpy numpy configparser astropy"
