@@ -40,9 +40,3 @@ install:
 - pip install -r requirements.txt
 
 script: cd examples; python mock_catalog_generation.py configs/RSD_mock.cfg
-
-deploy:
-    provider: script
-    script: cd examples; python mock_catalog_generation.py configs/RSD_mock.cfg
-    on:
-        branch: master
