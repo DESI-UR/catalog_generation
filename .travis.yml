@@ -1,6 +1,9 @@
 os:
 - linux
 
+
+language: python
+
 # Travis tech support recommended trying sudo true for more stable builds.
 # Seems odd, but maybe they isolate us from other users more if we need sudo.
 sudo: false
