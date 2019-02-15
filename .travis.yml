@@ -10,29 +10,35 @@ sudo: false
 
 python:
 - 3.3
-- 3.5
+#- 3.4
+#- 3.5
+#- 3.6
+#- 3.7-dev
 
 env:
     global:
         # The following versions are the 'default' for tests, unless
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - NUMPY_VERSION=1.13.1
-        - SCIPY_VERSION=0.19.1
-        - ASTROPY_VERSION=1.2.1
-        - CONFIGPARSER_VERSION=3.5.0
-        - HEALPY_VERSION=1.11.0
-        - MATPLOTLIB_VERSION=2.0.0
+        #- NUMPY_VERSION=1.13.1
+        #- SCIPY_VERSION=0.19.1
+        #- ASTROPY_VERSION=1.2.1
+        #- CONFIGPARSER_VERSION=3.5.0
+        #- HEALPY_VERSION=1.11.0
+        #- MATPLOTLIB_VERSION=2.0.0
         # These packages will always be installed.
-        - CONDA_DEPENDENCIES="scipy pyyaml matplotlib healpy numpy configparser astropy"
+        #- CONDA_DEPENDENCIES="scipy pyyaml matplotlib healpy numpy configparser astropy"
         # These packages will only be installed if we really need them.
-        - CONDA_ALL_DEPENDENCIES=""
+        #- CONDA_ALL_DEPENDENCIES=""
         # These packages will always be installed.
-        #- PIP_DEPENDENCIES=""
+        #- PIP_DEPENDENCIES="scipy pyyaml matplotlib healpy numpy configparser astropy"
         # These packages will only be installed if we really need them.
         #- PIP_ALL_DEPENDENCIES=""
         # Debug the Travis install process.
-        - DEBUG=False
+        - DEBUG=True
+
+install:
+- pip install -r requirements.txt
 
 deploy:
     provider: script
