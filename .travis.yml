@@ -20,7 +20,6 @@ env:
         - CONFIGPARSER_VERSION=3.5.0
         - HEALPY_VERSION=1.11.0
         - MATPLOTLIB_VERSION=2.0.0
-        - MAIN_CMD='cd examples; python mock_catalog_generation.py configs/RSD_mock.cfg'
         # These packages will always be installed.
         - CONDA_DEPENDENCIES="scipy pyyaml matplotlib healpy numpy configparser astropy"
         # These packages will only be installed if we really need them.
@@ -32,5 +31,8 @@ env:
         # Debug the Travis install process.
         - DEBUG=False
 
-script:
-    - $MAIN_CMD
+deploy:
+    provider: script
+    script: cd examples; python mock_catalog_generation.py configs/RSD_mock.cfg
+    on:
+        branch: master
