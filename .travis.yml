@@ -40,3 +40,6 @@ install:
 - pip install -r requirements.txt
 
 script: cd examples; python mock_catalog_generation.py configs/RSD_mock.cfg
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)
