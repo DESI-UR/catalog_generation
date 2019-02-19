@@ -234,18 +234,18 @@ class GeneralTools():
         interpolator = interp1d(rs, zs, bounds_error=False, fill_value=-9999.)
         return interpolator            
 
-    """
-    Function to read the template r distribution for mock and random generation
-
-    Parameters
-    ----------
-    None
-
-    Returns
-    -------
-    None
-    """
     def get_template(self):
+        """
+        Function to read the template r distribution for mock and random generation
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        None
+        """
         self.hdulist      = fits.open(self.datafile)
         self.data_z       = self.hdulist[1].data['Z']
         #template_cut = np.array([(self.data_z[i] < self.z_max+0.125) and (self.data_z[i] > self.z_min) for i in range(len(self.data_z))])
@@ -259,19 +259,19 @@ class GeneralTools():
         self.template_r_len = len(self.template_r)
         self.template_r_min = np.amin(self.template_r)
         self.template_r_max = np.amax(self.template_r)
-                    
-    """
-    Function to read the completeness map for mock and random generation
 
-    Parameters
-    ----------
-    diagnostics : boolean
-
-    Returns
-    -------
-    None
-    """
     def get_mask(self, diagnostics=False):
+        """
+        Function to read the completeness map for mock and random generation
+
+        Parameters
+        ----------
+        diagnostics : boolean
+        
+        Returns
+        -------
+        None
+        """
         self.mask             = np.load(self.ang_mask)
         self.completeness     = self.mask.f.CMPLTNSS
         self.completeness_len = len(self.completeness)
@@ -282,22 +282,21 @@ class GeneralTools():
             hp.mollview(self.completeness, title="Completeness")
             plt.savefig("diagnostics/completeness.pdf")
 
-    """
-    Function to  generate r values uniformly distributed with (r_min, r_max)
-
-    Parameters
-    ----------
-    num_obs : int
-        number of r values to generate
-    
-    diagnostics : boolean
-
-    Returns
-    -------
-    array(dtype=flat)
-        
-    """
     def generate_uniform_r(self, num_obs=None, diagnostics=False):
+        """
+        Function to  generate r values uniformly distributed with (r_min, r_max)
+            
+        Parameters
+        ----------
+        num_obs : int
+             number of r values to generate
+    
+        diagnostics : boolean
+        
+        Returns
+        -------
+        array(dtype=flat)
+        """
         if num_obs is None:
             num_obs = self.n_center
         flat_r = np.random.uniform(self.template_r_min, self.template_r_max, num_obs)
@@ -310,24 +309,23 @@ class GeneralTools():
             plt.savefig("diagnostics/r_distribution.pdf")        
         return flat_r
 
-    """
-    Function to generate r values based on histogrammed data r distribution
-    This function is used to generate r distribution depending on the
-    template provided
-    
-    Parameters
-    ----------
-    num_obs : int
-        number of r values to generate
-    
-    diagnostics : boolean
-
-    Returns
-    -------
-    array(dtype=flat)
-    
-    """
     def generate_r(self, nobs, diagnostics=False):
+        """
+        Function to generate r values based on histogrammed data r distribution
+        This function is used to generate r distribution depending on the
+        template provided
+    
+        Parameters
+        ----------
+        num_obs : int
+             number of r values to generate
+    
+        diagnostics : boolean
+
+        Returns
+        -------
+        array(dtype=flat)
+        """
         num_obs = 0
         rlist   = []
         if self.template_w is not None:
@@ -356,23 +354,22 @@ class GeneralTools():
         if not os.path.isdir("diagnostics"):
                 os.makedirs("diagnostics")
 
-    """
-    Function that return the indices of the r values that passes
-    the acceptance test
-    
-    Parameters
-    ----------
-    r_test : double
-        r values to be test for acceptance
-
-    Returns
-    -------
-    boolean array
-        a boolean array which has True values for the r values that passed the acceptance test
-        and False values for the r values that did not pass the acceptance test
-    
-    """
     def check_radial_acceptance(self, r_test):
+        """
+        Function that return the indices of the r values that passes
+        the acceptance test
+    
+        Parameters
+        ----------
+        r_test : double
+             r values to be test for acceptance
+
+        Returns
+        -------
+        boolean array
+             a boolean array which has True values for the r values that passed the acceptance test
+             and False values for the r values that did not pass the acceptance test
+        """
         template_r   = np.array(self.template_r)
         template_r   = template_r[template_r<=self.r_max]
         num_bins     = int(np.sqrt(len(template_r)))
@@ -396,23 +393,22 @@ class GeneralTools():
             return p1>acc
         return np.full(len(p1), True)
 
-    """
-    Function that return the indices of the z values that passes
-    the acceptance test
-    
-    Parameters
-    ----------
-    z_test : double
-        z values to be test for acceptance
-
-    Returns
-    -------
-    boolean array
-        a boolean array which has True values for the z values that passed the acceptance test
-        and False values for the r values that did not pass the acceptance test
-    
-    """
     def check_z_acceptance(self, z_test):
+        """
+        Function that return the indices of the z values that passes
+        the acceptance test
+    
+        Parameters
+        ----------
+        z_test : double
+             z values to be test for acceptance
+
+        Returns
+        -------
+        boolean array
+             a boolean array which has True values for the z values that passed the acceptance test
+             and False values for the r values that did not pass the acceptance test
+        """
         template_z   = np.array(self.template_z)
         if self.template_w is not None:
             template_w   = self.template_w[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
@@ -449,25 +445,24 @@ class GeneralTools():
         print("not applying z acceptance...")
         return np.full(len(p1), True)
 
-    """
-    Function that returns randomly generated (theta, phi)'s using the 
-    completeness map defined in the configuration
-
-    Parameters
-    ----------
-    nobs: int
-        number of (theta, phi) pair to generate
-    diagnostics: bool
-        
-    Returns
-    -------
-    array of arrays
-        The first column of the returned array is for theta and the second column is for  the phi
-        coordinates. These coordinates are later transformed into RA and Dec while writing to the
-        fits file.
- 
-    """
     def generate_uniform_angular_position(self, nobs, diagnostics=False):
+        """
+        Function that returns randomly generated (theta, phi)'s using the 
+        completeness map defined in the configuration
+
+        Parameters
+        ----------
+        nobs: int
+             number of (theta, phi) pair to generate
+        diagnostics: bool
+        
+        Returns
+        -------
+        array of arrays
+             The first column of the returned array is for theta and the second column is for  the phi
+             coordinates. These coordinates are later transformed into RA and Dec while writing to the
+             fits file.
+        """
         num_obs  = 0
         thetas   = []
         phis     = []
