@@ -81,3 +81,7 @@ The first line is an interpolator for z-to-r conversion which is faster than usi
 ### Saving the output
 
 Being written
+
+## Build Test Results
+
+[![Build Status](https://travis-ci.com/DESI-UR/catalog_generation.svg?branch=master)](https://travis-ci.com/DESI-UR/catalog_generation)
