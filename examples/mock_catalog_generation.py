@@ -37,7 +37,7 @@ gt.generate_clumps(add_clumps_to_rims=True)
 # Another example about this plotting option is on a python notebook
 try:
     gt.catalog.plot("cen_0")
-except:
+except Exception as e:
     skip_plot = True
 
 # Save the output
