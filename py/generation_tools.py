@@ -28,19 +28,20 @@ DEG2RAD = np.pi/180.0
 RAD2DEG = 1./DEG2RAD
 
 class GeneralTools():
-    """
-    Initialize the tools using a configuration file
 
-    Parameters
-    -----------
-    configFile : string
-        The configuration filename with the parameters to use
-
-    Returns
-    -------
-    None
-    """
     def __init__(self, configFile, diagnostics=False, acceptance=True):
+        """
+        Initialize the tools using a configuration file
+
+        Parameters
+        -----------
+        configFile : string
+             The configuration filename with the parameters to use
+
+        Returns
+        -------
+             None
+        """
         self.diagnostics = diagnostics
         self.acceptance  = acceptance
         self.config_file = configFile
@@ -49,39 +50,37 @@ class GeneralTools():
         self.get_template()
         self.get_mask()
         
-    """
-    Function to change the diagnostics level. Even though it can be set during initialization, this
-    function makes it possible to change the diagnostics during operation
-
-    Parameters
-    ----------
-    diagnostics : boolean
-
-    Returns
-    -------
-    None
-
-    """
     def setDiagnostics(self, diagnostics):
+        """
+        Function to change the diagnostics level. Even though it can be set during initialization, this
+        function makes it possible to change the diagnostics during operation
+
+        Parameters
+        ----------
+        diagnostics : boolean
+
+        Returns
+        -------
+        None
+        """
         self.diagnostics = diagnostics
-        
 
-    """
-    Function to read and process a line in configuration. 
-    This is needed because the user may input parameters with dimensions.
-    For example, the user can either define the BAO radius in Mpc or in h^-1*Mpc
-    
-    Parameters
-    ----------
-    config_line: string
-         a line read by configparser to be processed for unit and dimension
-
-    Returns
-    -------
-    quantity: astropy.units.Quantity
-         value of the parameter in the configparser line. If the unit is given, it will be taken into account
-    """
     def read_config_line(self, config_line):
+        """
+        Function to read and process a line in configuration. 
+        This is needed because the user may input parameters with dimensions.
+        For example, the user can either define the BAO radius in Mpc or in h^-1*Mpc
+    
+        Parameters
+        ----------
+        config_line: string
+             a line read by configparser to be processed for unit and dimension
+
+        Returns
+        -------
+        quantity: astropy.units.Quantity
+             value of the parameter in the configparser line. If the unit is given, it will be taken into account
+        """
         try:
             quantity = u.Quantity(config_line)
         except Exception as e:
@@ -90,18 +89,18 @@ class GeneralTools():
                             'Please check for correct syntax, either a real number or a quantity with unit'.format(config_line))
         return quantity
     
-    """
-    Function to set the parameters of the object using the configuration file.
-
-    Parameters
-    ----------
-    None
-
-    Returns
-    -------
-    None
-    """
     def getConfig(self):
+        """
+        Function to set the parameters of the object using the configuration file.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         self.config     = configparser.RawConfigParser()
         self.config.read(self.config_file)
 
@@ -197,18 +196,18 @@ class GeneralTools():
 
         print("anisotropy scale is : {}".format(self.anisotropy_scale))
 
-    """
-    Function to generate a lookup table for z to r conversion
-    
-    Parameters
-    ----------
-    None
-
-    Returns
-    -------
-    None
-    """
     def generate_LUT_z2r(self):
+        """
+        Function to generate a lookup table for z to r conversion
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        None
+        """
         z_min = 0.1
         z_max = 3.0
         zs = np.linspace(z_min, z_max, 1000)
@@ -216,18 +215,18 @@ class GeneralTools():
         interpolator = interp1d(zs, rs, bounds_error=False, fill_value=-1.)
         return interpolator
 
-    """
-    Function to generate a lookup table for r to z conversion
-    
-    Parameters
-    ----------
-    None
-
-    Returns
-    -------
-    None
-    """
     def generate_LUT_r2z(self):
+        """
+        Function to generate a lookup table for r to z conversion
+    
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        None
+        """
         z_min = 0.1
         z_max = 3.0
         zs = np.linspace(z_min, z_max, 1000)
