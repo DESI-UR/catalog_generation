@@ -57,7 +57,7 @@ class catalog:
                 decs.append(self.centers[key].dec)
                 ras.append(self.centers[key].ra)
                 types.append(self.centers[key].TYPE)
-        except:
+        except Exception as e:
             no_centers = True
         try:
             for key in self.rims:
@@ -65,7 +65,7 @@ class catalog:
                 decs.append(self.rims[key].dec)
                 ras.append(self.rims[key].ra)
                 types.append(self.rims[key].TYPE)
-        except:
+        except Exception as e:
             no_rims = True
         try:
             for key in self.flats:
@@ -73,7 +73,7 @@ class catalog:
                 decs.append(self.flats[key].dec)
                 ras.append(self.flats[key].ra)
                 types.append(self.flats[key].TYPE)
-        except:
+        except Exception as e:
             no_flats = True
         try:
             for key in self.clumps_center:
@@ -81,7 +81,7 @@ class catalog:
                 decs.append(self.clumps_center[key].dec)
                 ras.append(self.clumps_center[key].ra)
                 types.append(self.clumps_center[key].TYPE)
-        except:
+        except Exception as e:
             no_cc = True
         try:
             for key in self.clumps_flat:
@@ -89,7 +89,7 @@ class catalog:
                 decs.append(self.clumps_flat[key].dec)
                 ras.append(self.clumps_flat[key].ra)
                 types.append(self.clumps_flat[key].TYPE)
-        except:
+        except Exception as e:
             no_cf = True
         return rs, ras, decs, types
 

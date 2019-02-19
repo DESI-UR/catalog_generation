@@ -8,7 +8,6 @@ import numpy as np
 import healpy as hp
 import math, random
 import matplotlib as mpl
-#mpl.use("Agg")
 import matplotlib.pyplot as plt
 import configparser
 from astropy.io import fits
@@ -40,12 +39,8 @@ class GeneralTools():
     Returns
     -------
     None
-
     """
     def __init__(self, configFile, diagnostics=False, acceptance=True):
-        """
-        COMMENTS HERE
-        """
         self.diagnostics = diagnostics
         self.acceptance  = acceptance
         self.config_file = configFile
@@ -65,6 +60,7 @@ class GeneralTools():
     Returns
     -------
     None
+
     """
     def setDiagnostics(self, diagnostics):
         self.diagnostics = diagnostics
@@ -399,8 +395,7 @@ class GeneralTools():
 
         if self.acceptance:
             return p1>acc
-        else:
-            return np.full(len(p1), True)
+        return np.full(len(p1), True)
 
     """
     Function that return the indices of the z values that passes
@@ -452,9 +447,8 @@ class GeneralTools():
         if self.acceptance:
             print("applying the z acceptance...")
             return passed_acceptance
-        else:
-            print("not applying z acceptance...")
-            return np.full(len(p1), True)
+        print("not applying z acceptance...")
+        return np.full(len(p1), True)
 
     """
     Function that returns randomly generated (theta, phi)'s using the 
@@ -534,8 +528,6 @@ class GeneralTools():
 
     def generate_center_galaxies(self):
         r_center, theta_center, phi_center = self.generate_galaxies(self.n_center)
-        # TODO: using the galaxy and catalog clusters
-        #       populate the objects
         center_galaxies = {}
         for i in range(self.n_center):
             center_galaxies["cen_{}".format(i)] = galaxy(theta=theta_center[i], phi=phi_center[i], r=r_center[i], TYPE=0)
@@ -597,8 +589,7 @@ class GeneralTools():
         if center_theta is not None and center_phi is not None:
             rotationMatrix = self.calculateRotationMatrix(center_theta, center_phi)
             return np.matmul(rotationMatrix, curr_vector.transpose())
-        else:
-            return curr_vector
+        return curr_vector
         
     # function to convert cartesian coordinates to spherical coordinates
     def fromCartesianVector(self, vec):
@@ -638,7 +629,7 @@ class GeneralTools():
             
         for i in range(self.n_center):
             curr_center_galaxy = self.catalog.centers["cen_{}".format(i)]
-            if len(curr_center_galaxy.childs) > 0:
+            if curr_center_galaxy.childs:
                 curr_center_galaxy_childs = curr_center_galaxy.childs
             else:
                 curr_center_galaxy_childs = []
@@ -726,7 +717,7 @@ class GeneralTools():
             curr_seed_galaxy = self.catalog.centers["cen_{}".format(idx)]
             # get the list of already existing childs of the seed galaxy
             # if there is none, then use an empty list
-            if len(curr_seed_galaxy.childs) > 0:
+            if curr_seed_galaxy.childs:
                 curr_seed_galaxy_childs = curr_seed_galaxy.childs
             else:
                 curr_seed_galaxy_childs = []
@@ -765,7 +756,7 @@ class GeneralTools():
             curr_seed_galaxy = self.catalog.rims["rim_{}_{}".format(seed_idx1, seed_idx2)]
             # get the list of childs of the seed galaxy
             # if there is none, then use an empty list
-            if len(curr_seed_galaxy.childs) > 0:
+            if curr_seed_galaxy.childs:
                 curr_seed_galaxy_childs = curr_seed_galaxy.childs
             else:
                 curr_seed_galaxy_childs = []
@@ -810,7 +801,7 @@ class GeneralTools():
             curr_seed_galaxy = self.catalog.flats["flat_{}".format(idx)]
             # get the list of already existing childs of the seed galaxy
             # if there is none, then use an empty list
-            if len(curr_seed_galaxy.childs) > 0:
+            if curr_seed_galaxy.childs:
                 curr_seed_galaxy_childs = curr_seed_galaxy.childs
             else:
                 curr_seed_galaxy_childs = []
