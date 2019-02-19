@@ -88,7 +88,7 @@ class GeneralTools():
     def read_config_line(self, config_line):
         try:
             quantity = u.Quantity(config_line)
-        except:
+        except Exception as e:
             raise Exception('the value provided for the following line is invalid'
                             '{}'
                             'Please check for correct syntax, either a real number or a quantity with unit'.format(config_line))
@@ -169,20 +169,20 @@ class GeneralTools():
         self.nr_clump       = int(self.config.get('Gen Params','nr_clump'))
         try:
             self.clump_dist = int(self.config.get('Gen Params','clump_dist'))
-        except:
+        except Exception as e:
             self.clump_dist = 0
         try:
             self.frac_f2c   = int(self.config.get('Gen Params','frac_f2c'))
-        except:
+        except Exception as e:
             self.frac_f2c   = None
         try:
             self.frac_c2r   = int(self.config.get('Gen Params','frac_c2r'))
-        except:
+        except Exception as e:
             self.frac_c2r   = None
         try:
             self.a          = float(self.config.get('Gen Params','a'))
             self.b          = float(self.config.get('Gen Params','b'))
-        except:
+        except Exception as e:
             self.a          = 1.
             self.b          = 1.
         self.n_clump        = int(self.config.get('Gen Params','n_clump'))
@@ -190,7 +190,7 @@ class GeneralTools():
         try:
             self.z_min      = float(self.config.get("Gen Params", "z_min"))
             self.z_max      = float(self.config.get("Gen Params", "z_max"))
-        except:
+        except Exception as e:
             print("using predefined z bounds [0.4, 0.7]")
             self.z_min      = 0.4
             self.z_max      = 0.7
@@ -258,7 +258,7 @@ class GeneralTools():
         self.template_z   = self.data_z[template_cut]
         try:
             self.template_w = self.hdulist[1].data['HistoW'][template_cut]
-        except:
+        except Exception as e:
             self.template_w = np.full(len(self.template_z), fill_value=1.)
         self.template_r   = [r.value for r in self.cosmo.comoving_distance(self.template_z)]
         self.template_r_len = len(self.template_r)
@@ -303,7 +303,7 @@ class GeneralTools():
         
     """
     def generate_uniform_r(self, num_obs=None, diagnostics=False):
-        if num_obs == None:
+        if num_obs is None:
             num_obs = self.n_center
         flat_r = np.random.uniform(self.template_r_min, self.template_r_max, num_obs)
         # if diagnostics enabled, plot the distribution
@@ -674,7 +674,7 @@ class GeneralTools():
             print("generating flat galaxies for random catalog")
             r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_rand)
         flat_galaxies = {}
-        for i in range(len(r_flat)):
+        for i, _ in enumerate(r_flat):
             flat_galaxies["flat_{}".format(i)] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2)
         self.catalog.flats = flat_galaxies
         return r_flat, theta_flat, phi_flat
