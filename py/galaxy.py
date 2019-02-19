@@ -77,12 +77,3 @@ class galaxy:
         print("  Dist:   {}".format(self.r))
         if self.parent is not None:
             print("  Prnt:   {}".format(self.parent))
-        """
-        try:
-            print("  Childs: {}".format(len(self.childs)))
-            if print_childs:
-                for i in range(len(self.childs)):
-                    self.childs[i].print_info(print_childs=True)
-        except:
-            return
-        """
