@@ -8,6 +8,7 @@ language: python
 # Seems odd, but maybe they isolate us from other users more if we need sudo.
 sudo: false
 
+# try for different python versions
 python:
 - 3.4
 #- 3.5
@@ -16,30 +17,9 @@ python:
 
 env:
     global:
-        # The following versions are the 'default' for tests, unless
-        # overidden underneath. They are defined here in order to save having
-        # to repeat them for all configurations.
-        #- NUMPY_VERSION=1.13.1
-        #- SCIPY_VERSION=0.19.1
-        #- ASTROPY_VERSION=1.2.1
-        #- CONFIGPARSER_VERSION=3.5.0
-        #- HEALPY_VERSION=1.11.0
-        #- MATPLOTLIB_VERSION=2.0.0
-        # These packages will always be installed.
-        #- CONDA_DEPENDENCIES="scipy pyyaml matplotlib healpy numpy configparser astropy"
-        # These packages will only be installed if we really need them.
-        #- CONDA_ALL_DEPENDENCIES=""
-        # These packages will always be installed.
-        #- PIP_DEPENDENCIES="scipy pyyaml matplotlib healpy numpy configparser astropy"
-        # These packages will only be installed if we really need them.
-        #- PIP_ALL_DEPENDENCIES=""
-        # Debug the Travis install process.
         - DEBUG=True
 
 install:
 - pip install -r requirements.txt
 
-script: cd examples; python mock_catalog_generation.py configs/RSD_mock.cfg
-
-after_success:
-- bash <(curl -s https://codecov.io/bash)
+script: cd examples; python mock_catalog_generation.py configs/test.cfg
