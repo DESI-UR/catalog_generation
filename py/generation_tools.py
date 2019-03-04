@@ -113,8 +113,8 @@ class GeneralTools():
         if H0.unit == u.dimensionless_unscaled:
             # if the unit is not given for H0, then it should be h0.
             # that needs to be changed to H0
-            self.h0    = H0
-            self.H0    = H0 * 100.
+            self.h0    = H0.value
+            self.H0    = H0.value * 100.
         else:
             # if the unit is given for H0, then it should be H0.
             self.h0    = H0.to("Mpc").value/100.
@@ -141,12 +141,12 @@ class GeneralTools():
         r_BAO               = self.read_config_line(self.config.get('Gen Params','r_bao'))
         if r_BAO.unit == u.dimensionless_unscaled:
             # we need to change r_BAO so that it will have the unit of Mpc
-            self.r_BAO      = r_BAO/self.h0
+            self.r_BAO      = r_BAO.value/self.h0
         else:
             self.r_BAO      = r_BAO.to("Mpc").value
         sigma_r_BAO         = self.read_config_line(self.config.get('Gen Params','sigr_bao'))
         if sigma_r_BAO.unit == u.dimensionless_unscaled:
-            self.sigma_r_BAO= sigma_r_BAO/self.h0
+            self.sigma_r_BAO= sigma_r_BAO.value/self.h0
         else:
             self.sigma_r_BAO= sigma_r_BAO.to("Mpc").value
 
@@ -154,7 +154,7 @@ class GeneralTools():
         self.gamma          = float(self.config.get('Gen Params','gamma'))
         r_0                 = self.read_config_line(self.config.get('Gen Params','r_0'))
         if r_0.unit == u.dimensionless_unscaled:
-            self.r_0        = r_0/self.h0
+            self.r_0        = r_0.value/self.h0
         else:
             self.r_0        = r_0.to("Mpc").value
         self.n_rand         = int(self.config.get('Gen Params','n_rand'))
@@ -393,7 +393,7 @@ class GeneralTools():
             return p1>acc
         return np.full(len(p1), True)
 
-    def check_z_acceptance(self, z_test):
+    def check_z_acceptance(self, z_test, diagnostics=False):
         """
         Function that return the indices of the z values that passes
         the acceptance test
@@ -437,8 +437,20 @@ class GeneralTools():
         acc = [np.random.uniform(0, p) for p in p2]
 
         passed_acceptance = np.logical_and(np.logical_and(p1>acc, z_test<=self.z_max), z_test>=self.z_min)
-        print(np.min(z_test[passed_acceptance]), np.max(z_test[passed_acceptance]))
-        
+
+        if self.diagnostics or diagnostics:
+            # plot the distributions before and after the acceptance test
+            # along with the template distribution
+            fig = plt.figure(figsize=(6,6))
+            plt.hist(template_z, bins=num_bins, density=True, weights=template_w, range=(self.z_min, self.z_max),
+                     label="Template distribution", alpha=.3)
+            plt.hist(z_test, bins=num_bins, density=True, range=(self.z_min, self.z_max),
+                     label="Distribution before acceptance", alpha=.3)
+            plt.hist(z_test[passed_acceptance], bins=num_bins, density=True, range=(self.z_min, self.z_max),
+                     label="Distribution after acceptance", alpha=.3)
+            plt.legend()
+            plt.show()
+            
         if self.acceptance:
             print("applying the z acceptance...")
             return passed_acceptance
@@ -668,7 +680,7 @@ class GeneralTools():
         r, theta, phi = self.read_generated_file(filename)
         return self.generate_clumps(r, theta, phi)
     
-    def generate_clumps(self, add_clumps_to_rims = False):
+    def generate_clumps(self, add_clumps_to_rims = False, diagnostics=False):
         # generate flat galaxies (will be returned and be added to the mocks later)
         if self.catalog.flats is None:
             self.generate_flat_galaxies()
@@ -685,8 +697,7 @@ class GeneralTools():
         else:
             num_center_clumps = int(self.nr_clump / ( 1 + self.frac_f2c ))
             num_flat_clumps   = self.nr_clump - self.center_clumps
-        num_center_clumps = num_center_clumps if num_center_clumps > 1 else 2
-        num_flat_clumps   = num_flat_clumps if num_flat_clumps > 1 else 2        
+        
         # randomly choose indices from centers for the clumps
         # generate the clump positions with respect to their origin (a center galaxu)
         if self.frac_c2r is None:
@@ -698,6 +709,11 @@ class GeneralTools():
             rim_clumps_cnt    = num_center_clumps - center_clumps_cnt
             center_clumps_idx = np.random.choice(np.arange(0, self.n_center, 1), size=center_clumps_cnt)
             rim_clumps_idx    = np.random.choice(np.arange(0, self.n_center*self.n_rim, 1), size=rim_clumps_cnt)
+        if self.diagnostics or diagnostics:
+            print("The numbers of seed galaxues for clumping: \n"\
+                  "- Seed center galaxies: {} \n"\
+                  "- Seed rim galaxies   : {} \n"\
+                  "- Seed flat galaxies  : {} \n".format(len(center_clumps_idx), len(rim_clumps_idx), num_flat_clumps))
 
         # get the center clump object
         if self.catalog.clumps_center is None:
@@ -864,7 +880,7 @@ class GeneralTools():
         ws  = np.ones(len(zs))
         # acceptance test here. should it be done for individual types?
         if self.acceptance:
-            accepted_indices = self.check_z_acceptance(zs)
+            accepted_indices = self.check_z_acceptance(zs, diagnostics=True)
             zs    = np.asarray(zs)[accepted_indices]
             ras   = np.asarray(ras)[accepted_indices]
             decs  = np.asarray(decs)[accepted_indices]
