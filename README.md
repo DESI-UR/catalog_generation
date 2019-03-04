@@ -8,7 +8,7 @@
 
 ## Requirements
 The version of the python packages listed below are the tested version. Any recent versions of the packages should technically work.
-* [Python](https://www.python.org/) (version >2.7)
+* [Python](https://www.python.org/) (version >=3.5)
 * NumPy  (version 1.13.1)
 * HealPy (version 1.11.0)
 * configparser (version 3.5.0)
