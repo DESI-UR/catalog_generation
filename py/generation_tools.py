@@ -880,7 +880,7 @@ class GeneralTools():
         ws  = np.ones(len(zs))
         # acceptance test here. should it be done for individual types?
         if self.acceptance:
-            accepted_indices = self.check_z_acceptance(zs, diagnostics=True)
+            accepted_indices = self.check_z_acceptance(zs)
             zs    = np.asarray(zs)[accepted_indices]
             ras   = np.asarray(ras)[accepted_indices]
             decs  = np.asarray(decs)[accepted_indices]
