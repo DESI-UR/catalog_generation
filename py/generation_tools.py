@@ -656,7 +656,7 @@ class GeneralTools():
         return self.generate_rim(r, theta, phi, diagnostics)
 
     #
-    def generate_rim(self):
+    def generate_rim(self, diagnostics=False):
         if self.catalog.rims is None:
             rim_galaxies = {}
         else:
@@ -728,10 +728,12 @@ class GeneralTools():
             flat_galaxies["flat_{}".format(i)] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2)
         self.catalog.flats = flat_galaxies
         return r_flat, theta_flat, phi_flat
-    
-    def generate_clumps_from_file(self, filename):
+
+    """ THIS FUNCTION WILL BE WRITTEN AGAIN
+    def generate_clumps_from_file(self, filename, diagnostics=False):
         r, theta, phi = self.read_generated_file(filename)
-        return self.generate_clumps(r, theta, phi)
+        return self.generate_clumps(r, theta, phi, diagnostics)
+    """
     
     def generate_clumps(self, add_clumps_to_rims = False, diagnostics=False):
         # generate flat galaxies (will be returned and be added to the mocks later)
@@ -953,6 +955,12 @@ class GeneralTools():
             plt.legend()
             plt.savefig("diagnostics/clump_r_distributions.pdf")
             plt.close()
+            average_flat_clump_r   = np.average(mid_values, weights=self.flat_clump_r_dist/np.sum(self.flat_clump_r_dist))
+            average_center_clump_r = np.average(mid_values, weights=self.center_clump_r_dist/np.sum(self.center_clump_r_dist))
+            average_rim_clump_r    = np.average(mid_values, weights=self.rim_clump_r_dist/np.sum(self.rim_clump_r_dist))
+            print("Average distance for flat clumps  : {:.2f} h^-1 Mpc".format(average_flat_clump_r*self.h0))
+            print("Average distance for center clumps: {:.2f} h^-1 Mpc".format(average_center_clump_r*self.h0))
+            print("Average distance for rim clumps   : {:.2f} h^-1 Mpc".format(average_rim_clump_r*self.h0))
             
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
