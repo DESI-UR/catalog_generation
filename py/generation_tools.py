@@ -766,14 +766,16 @@ class GeneralTools():
                 n_clump_to_inject = self.n_clump_center
             else:
                 n_clump_to_inject = np.random.poisson(self.n_clump_center)
-            clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject)+1))
+            # we move the calculated distances by 1Mpc to have a realistic clustering
+            clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
             for j in range(n_clump_to_inject):
                 # due to random distribution, sometimes we ggenerate locations very far from the
                 # seed galaxy. These distance galaxies cannot be considered as part of the
-                # cluster, so they are not added.
-                if clump_r[j] > 20.:
+                # cluster, so they are not added. the upper limit here is defined assuming
+                # superclusters are of size roughly 200Mpc
+                if clump_r[j] > 200.:
                     # these are the ones not to be added
                     continue
                 else:
@@ -812,14 +814,16 @@ class GeneralTools():
                 n_clump_to_inject = self.n_clump_center
             else:
                 n_clump_to_inject = np.random.poisson(self.n_clump_center)
-            clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject)+1))
+            # we move the calculated distances by 1Mpc to have a realistic clustering
+            clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
             for j in range(n_clump_to_inject):
                 # due to random distribution, sometimes we ggenerate locations very far from the
                 # seed galaxy. These distance galaxies cannot be considered as part of the
-                # cluster, so they are not added.
-                if clump_r[j] > 20.:
+                # cluster, so they are not added. the upper limit here is defined assuming
+                # superclusters are of size roughly 200Mpc
+                if clump_r[j] > 200.:
                     continue
                 else:
                     # calculate the absolute position of the clump galaxy
@@ -862,15 +866,17 @@ class GeneralTools():
             if self.clump_dist == 0:
                 n_clump_to_inject = self.n_clump
             else:
-                n_clump_to_inject = np.random.poisson(self.n_clump)            
-            clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject)+1))
+                n_clump_to_inject = np.random.poisson(self.n_clump)
+            # we move the calculated distances by 1Mpc to have a realistic clustering
+            clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
             for j in range(n_clump_to_inject):
                 # due to random distribution, sometimes we ggenerate locations very far from the
                 # seed galaxy. These distance galaxies cannot be considered as part of the
-                # cluster, so they are not added.
-                if clump_r[j] > 20.:
+                # cluster, so they are not added. the upper limit here is defined assuming
+                # superclusters are of size roughly 200Mpc
+                if clump_r[j] > 200.:
                     continue
                 else:
                     # calculate the absolute position of the clump galaxy
