@@ -462,6 +462,7 @@ class GeneralTools():
         if self.diagnostics or diagnostics:
             # plot the distributions before and after the acceptance test
             # along with the template distribution
+            self.check_diagnostics_directory()
             fig = plt.figure(figsize=(6,6))
             plt.hist(template_z, bins=num_bins, density=True, weights=template_w, range=(self.z_min, self.z_max),
                      label="Template distribution", alpha=.3)
@@ -917,6 +918,7 @@ class GeneralTools():
         if self.diagnostics or diagnostics:
             values     = np.linspace(0, 200, 51)
             mid_values = (values[1:]+values[:-1])/2.
+            self.check_diagnostics_directory()
             fig = plt.figure(figsize=(6,6))
             plt.plot(mid_values, self.flat_clump_r_dist, label="flat seeded clumps")
             plt.plot(mid_values, self.center_clump_r_dist, label="center seeded clumps")
