@@ -52,6 +52,7 @@ class GeneralTools():
         self.flat_clump_r_dist, _   = np.histogram([], bins=50, range=(0, 200))
         self.center_clump_r_dist, _ = np.histogram([], bins=50, range=(0, 200))
         self.rim_clump_r_dist, _    = np.histogram([], bins=50, range=(0, 200))
+        self.rim_BAO_r_dist, _      = np.histogram([], bins=100, range=(100, 200))
         
     def setDiagnostics(self, diagnostics):
         """
@@ -669,6 +670,7 @@ class GeneralTools():
                 curr_center_galaxy_childs = []
             curr_rim_cnt = 0
 
+            curr_r_list = []
             while curr_rim_cnt < self.n_rim:
                 curr_phi   = np.random.uniform(0., 360., 1)
                 curr_theta = np.arccos(np.random.uniform(-1., 1., 1))*RAD2DEG-90.
@@ -684,12 +686,35 @@ class GeneralTools():
                     rim_galaxies["rim_{}_{}".format(i, curr_rim_cnt)] = galaxy(theta=curr_rim[1], phi=curr_rim[2], r=curr_rim[0],
                                                                                parent="cen_{}".format(i), TYPE=1)
                     curr_center_galaxy_childs.append("rim_{}_{}".format(i, curr_rim_cnt))
-                    curr_rim_cnt += 1                
+                    curr_rim_cnt += 1
+                    curr_r_list.append(curr_r)
+            # if diagnostics is enabled, add the current distribution of distances with respect to the respective center
+            # into the main histogram
+            if self.diagnostics or diagnostics:
+                rim_BAO_r_dist, _    = np.histogram(curr_r_list, bins=100, range=(100, 200))
+                self.rim_BAO_r_dist += rim_BAO_r_dist
             curr_center_galaxy.childs = curr_center_galaxy_childs
         if self.catalog.rims is None:
             self.catalog.rims = rim_galaxies
         else:
             self.catalog.rims.update(rim_galaxies)
+        # if diagnostics is enabled, plot the distribution of the rim galaxies with respect to their centers
+        if self.diagnostics or diagnostics:
+            bins = np.linspace(100, 200, 101)
+            bin_centers = (bins[1:]+bins[:-1])*.5*self.h0
+            normed_rim_BAO_r_dist = self.rim_BAO_r_dist/np.sum(self.rim_BAO_r_dist)
+            fig = plt.figure(figsize=(6,6))
+            plt.plot(bin_centers, normed_rim_BAO_r_dist, label='Distribution in the mock', color='black')
+            plt.plot([self.r_BAO*self.h0, self.r_BAO*self.h0], [0, normed_rim_BAO_r_dist.max()], '--', color='black',
+                     label=r'r$_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.r_BAO*self.h0))
+            plt.plot([(self.r_BAO-1.2*self.sigma_r_BAO)*self.h0, (self.r_BAO+1.2*self.sigma_r_BAO)*self.h0],
+                     [normed_rim_BAO_r_dist.max()/np.e, normed_rim_BAO_r_dist.max()/np.e], ':',
+                      color='black', label=r'$\sigma_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.sigma_r_BAO*self.h0))
+            plt.xlabel("Distance [$h^{-1}$Mpc]")
+            plt.title('Distribution of the distance of rim galaxies \n with respect to their centers')
+            plt.savefig("diagnostics/BAO_distribution.pdf")
+            plt.legend()
+            plt.close()
         return
 
     def generate_flat_galaxies(self, is_random=False):
@@ -917,14 +942,14 @@ class GeneralTools():
         # if diagnostics is enables, plot the distribution of the distances of clumps with respect to their seeds
         if self.diagnostics or diagnostics:
             values     = np.linspace(0, 200, 51)
-            mid_values = (values[1:]+values[:-1])/2.
+            mid_values = (values[1:]+values[:-1])*0.5*self.h0
             self.check_diagnostics_directory()
             fig = plt.figure(figsize=(6,6))
-            plt.plot(mid_values, self.flat_clump_r_dist, label="flat seeded clumps")
-            plt.plot(mid_values, self.center_clump_r_dist, label="center seeded clumps")
-            plt.plot(mid_values, self.rim_clump_r_dist, label="rim seeded clumps")
-            plt.title(r"Distribution of distances with respect to their seeds")
-            plt.xlabel("Distance [Mpc]")
+            plt.plot(mid_values, self.flat_clump_r_dist/np.sum(self.flat_clump_r_dist), label="flat seeded clumps", color='black')
+            plt.plot(mid_values, self.center_clump_r_dist/np.sum(self.center_clump_r_dist), '--', label="center seeded clumps", color='black')
+            plt.plot(mid_values, self.rim_clump_r_dist/np.sum(self.rim_clump_r_dist), '-.', label="rim seeded clumps", color='black')
+            plt.title('Distribution of the distances of clumping galaxies \n with respect to their seeds')
+            plt.xlabel("Distance [$h^{-1}$Mpc]")
             plt.legend()
             plt.savefig("diagnostics/clump_r_distributions.pdf")
             plt.close()
