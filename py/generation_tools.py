@@ -49,6 +49,9 @@ class GeneralTools():
         self.getConfig()
         self.get_template()
         self.get_mask()
+        self.flat_clump_r_dist, _   = np.histogram([], bins=50, range=(0, 200))
+        self.center_clump_r_dist, _ = np.histogram([], bins=50, range=(0, 200))
+        self.rim_clump_r_dist, _    = np.histogram([], bins=50, range=(0, 200))
         
     def setDiagnostics(self, diagnostics):
         """
@@ -291,10 +294,11 @@ class GeneralTools():
         self.nside            = hp.npix2nside(len(self.completeness))
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
-            plt.clf()
+            fig = plt.figure()
             hp.mollview(self.completeness, title="Completeness")
             plt.savefig("diagnostics/completeness.pdf")
-
+            plt.close()
+            
     def generate_uniform_r(self, num_obs=None, diagnostics=False):
         """
         Function to  generate r values uniformly distributed with (r_min, r_max)
@@ -465,8 +469,10 @@ class GeneralTools():
                      label="Distribution before acceptance", alpha=.3)
             plt.hist(z_test[passed_acceptance], bins=num_bins, density=True, range=(self.z_min, self.z_max),
                      label="Distribution after acceptance", alpha=.3)
+            plt.xlabel("Redshift [z]")
             plt.legend()
-            plt.show()
+            plt.savefig("diagnostics/acceptance_stats.pdf")
+            plt.close()
             
         if self.acceptance:
             print("applying the z acceptance...")
@@ -768,6 +774,9 @@ class GeneralTools():
                 n_clump_to_inject = np.random.poisson(self.n_clump_center)
             # we move the calculated distances by 1Mpc to have a realistic clustering
             clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
+            if self.diagnostics or diagnostics:
+                center_clump_r_dist, _    = np.histogram(clump_r, bins=50, range=(0, 200))
+                self.center_clump_r_dist += center_clump_r_dist
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
             for j in range(n_clump_to_inject):
@@ -816,6 +825,9 @@ class GeneralTools():
                 n_clump_to_inject = np.random.poisson(self.n_clump_center)
             # we move the calculated distances by 1Mpc to have a realistic clustering
             clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
+            if self.diagnostics or diagnostics:
+                rim_clump_r_dist, _    = np.histogram(clump_r, bins=50, range=(0, 200))
+                self.rim_clump_r_dist += rim_clump_r_dist
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
             for j in range(n_clump_to_inject):
@@ -869,6 +881,9 @@ class GeneralTools():
                 n_clump_to_inject = np.random.poisson(self.n_clump)
             # we move the calculated distances by 1Mpc to have a realistic clustering
             clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
+            if self.diagnostics or diagnostics:
+                flat_clump_r_dist, _    = np.histogram(clump_r, bins=50, range=(0, 200))
+                self.flat_clump_r_dist += flat_clump_r_dist
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
             for j in range(n_clump_to_inject):
@@ -898,6 +913,20 @@ class GeneralTools():
             # update the catalog object as all the center clumps are generated
         self.catalog.clumps_flat = clumps_flat
 
+        # if diagnostics is enables, plot the distribution of the distances of clumps with respect to their seeds
+        if self.diagnostics or diagnostics:
+            values     = np.linspace(0, 200, 51)
+            mid_values = (values[1:]+values[:-1])/2.
+            fig = plt.figure(figsize=(6,6))
+            plt.plot(mid_values, self.flat_clump_r_dist, label="flat seeded clumps")
+            plt.plot(mid_values, self.center_clump_r_dist, label="center seeded clumps")
+            plt.plot(mid_values, self.rim_clump_r_dist, label="rim seeded clumps")
+            plt.title(r"Distribution of distances with respect to their seeds")
+            plt.xlabel("Distance [Mpc]")
+            plt.legend()
+            plt.savefig("diagnostics/clump_r_distributions.pdf")
+            plt.close()
+            
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
 
