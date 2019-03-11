@@ -49,9 +49,9 @@ class GeneralTools():
         self.getConfig()
         self.get_template()
         self.get_mask()
-        self.flat_clump_r_dist, _   = np.histogram([], bins=50, range=(0, 200))
-        self.center_clump_r_dist, _ = np.histogram([], bins=50, range=(0, 200))
-        self.rim_clump_r_dist, _    = np.histogram([], bins=50, range=(0, 200))
+        self.flat_clump_r_dist, _   = np.histogram([], bins=100, range=(0, 100))
+        self.center_clump_r_dist, _ = np.histogram([], bins=100, range=(0, 100))
+        self.rim_clump_r_dist, _    = np.histogram([], bins=100, range=(0, 100))
         self.rim_BAO_r_dist, _      = np.histogram([], bins=100, range=(100, 200))
         
     def setDiagnostics(self, diagnostics):
@@ -799,7 +799,7 @@ class GeneralTools():
             # we move the calculated distances by 1Mpc to have a realistic clustering
             clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
             if self.diagnostics or diagnostics:
-                center_clump_r_dist, _    = np.histogram(clump_r, bins=50, range=(0, 200))
+                center_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                 self.center_clump_r_dist += center_clump_r_dist
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
@@ -853,7 +853,7 @@ class GeneralTools():
                 # we move the calculated distances by 1Mpc to have a realistic clustering
                 clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
                 if self.diagnostics or diagnostics:
-                    rim_clump_r_dist, _    = np.histogram(clump_r, bins=50, range=(0, 200))
+                    rim_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                     self.rim_clump_r_dist += rim_clump_r_dist
                 clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
                 clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
@@ -915,7 +915,7 @@ class GeneralTools():
             # we move the calculated distances by 1Mpc to have a realistic clustering
             clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
             if self.diagnostics or diagnostics:
-                flat_clump_r_dist, _    = np.histogram(clump_r, bins=50, range=(0, 200))
+                flat_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                 self.flat_clump_r_dist += flat_clump_r_dist
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
@@ -949,13 +949,14 @@ class GeneralTools():
 
         # if diagnostics is enables, plot the distribution of the distances of clumps with respect to their seeds
         if self.diagnostics or diagnostics:
-            values     = np.linspace(0, 200, 51)
+            values     = np.linspace(0, 100, 101)
             mid_values = (values[1:]+values[:-1])*0.5*self.h0
             self.check_diagnostics_directory()
             fig = plt.figure(figsize=(6,6))
             plt.plot(mid_values, self.flat_clump_r_dist/np.sum(self.flat_clump_r_dist), label="flat seeded clumps", color='black')
             plt.plot(mid_values, self.center_clump_r_dist/np.sum(self.center_clump_r_dist), '--', label="center seeded clumps", color='black')
             plt.plot(mid_values, self.rim_clump_r_dist/np.sum(self.rim_clump_r_dist), '-.', label="rim seeded clumps", color='black')
+            plt.yscale("log")
             plt.title('Distribution of the distances of clumping galaxies \n with respect to their seeds')
             plt.xlabel("Distance [$h^{-1}$Mpc]")
             plt.legend()
@@ -965,9 +966,9 @@ class GeneralTools():
             average_flat_clump_r   = np.average(mid_values, weights=self.flat_clump_r_dist/np.sum(self.flat_clump_r_dist))
             average_center_clump_r = np.average(mid_values, weights=self.center_clump_r_dist/np.sum(self.center_clump_r_dist))
             average_rim_clump_r    = np.average(mid_values, weights=self.rim_clump_r_dist/np.sum(self.rim_clump_r_dist))
-            print("Average distance for flat clumps  : {:.2f} h^-1 Mpc".format(average_flat_clump_r*self.h0))
-            print("Average distance for center clumps: {:.2f} h^-1 Mpc".format(average_center_clump_r*self.h0))
-            print("Average distance for rim clumps   : {:.2f} h^-1 Mpc".format(average_rim_clump_r*self.h0))
+            print("Average distance for flat clumps  : {:.2f} h^-1 Mpc [{:.2f} Mpc]".format(average_flat_clump_r, average_flat_clump_r/self.h0))
+            print("Average distance for center clumps: {:.2f} h^-1 Mpc [{:.2f} Mpc]".format(average_center_clump_r, average_center_clump_r/self.h0))
+            print("Average distance for rim clumps   : {:.2f} h^-1 Mpc [{:.2f} Mpc]".format(average_rim_clump_r, average_rim_clump_r/self.h0))
             
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
@@ -994,7 +995,7 @@ class GeneralTools():
         save_items = {'catalog': self.catalog, 'config': config}
         pickle.dump(save_items, open(filename, "wb"), protocol=-1)
 
-    def write_to_fits(self, filename=None, is_random=False):
+    def write_to_fits(self, filename=None, is_random=False, save_extended=False):
         if filename is None:
             if not is_random:
                 filename = self.fname_mock
@@ -1039,9 +1040,12 @@ class GeneralTools():
         col3 = fits.Column(name="dec", array=decs, format='E')
         col4 = fits.Column(name="weight", array=ws, format='E')
         col5 = fits.Column(name="TYPE", array=types, format='J')
-        col6 = fits.Column(name="parent", array=parents, format='A16')
-        col7 = fits.Column(name="name", array=names, format='A16')
-        cols = fits.ColDefs([col1, col2, col3, col4, col5, col6, col7])
+        if save_extended:
+            col6 = fits.Column(name="parent", array=parents, format='A16')
+            col7 = fits.Column(name="name", array=names, format='A16')
+            cols = fits.ColDefs([col1, col2, col3, col4, col5, col6, col7])
+        else:
+            cols = fits.ColDefs([col1, col2, col3, col4, col5])
         hdu  = fits.BinTableHDU.from_columns(cols, header=header)
         hdu.writeto(filename)
 
