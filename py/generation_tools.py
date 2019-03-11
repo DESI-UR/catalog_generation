@@ -363,13 +363,13 @@ class GeneralTools():
             num_obs += 1
         rlist = np.array(rlist)
         # plot the distribution for diagnostics
-        """
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
+            fig = plt.figure()
             plt.hist(rlist)
             plt.xlabel("r [Mpc]")
             plt.savefig("diagnostics/r_distribution.pdf")
-        """        
+            plt.close()
         return rlist
 
     def check_diagnostics_directory(self):
@@ -731,12 +731,6 @@ class GeneralTools():
         self.catalog.flats = flat_galaxies
         return r_flat, theta_flat, phi_flat
 
-    """ THIS FUNCTION WILL BE WRITTEN AGAIN
-    def generate_clumps_from_file(self, filename, diagnostics=False):
-        r, theta, phi = self.read_generated_file(filename)
-        return self.generate_clumps(r, theta, phi, diagnostics)
-    """
-    
     def generate_clumps(self, add_clumps_to_rims = False, diagnostics=False):
         # generate flat galaxies (will be returned and be added to the mocks later)
         if self.catalog.flats is None:
