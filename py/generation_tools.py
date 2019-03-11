@@ -319,14 +319,14 @@ class GeneralTools():
             num_obs = self.n_center
         flat_r = np.random.uniform(self.template_r_min, self.template_r_max, num_obs)
         # if diagnostics enabled, plot the distribution
-        """
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
+            fit = plt.figure()
             plt.hist(flat_r)
             plt.xlabel("r [Mpc]")
             plt.title("Flat r distribution")
-            plt.savefig("diagnostics/r_distribution.pdf")        
-        """
+            plt.savefig("diagnostics/r_distribution.pdf")
+            plt.close()
         return flat_r
 
     def generate_r(self, nobs, diagnostics=False):
@@ -517,30 +517,31 @@ class GeneralTools():
                 phis.append(curr_phi)
                 pixels.append(curr_pix)
                 num_obs += 1
-        """
         # plot the distribution for diagnostics
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             # completeness plot
-            plt.clf()
+            fig = plt.figure()
             pixels = np.zeros([12*self.nside**2])
             pixels[pixlist] = 1
             hp.mollview(pixels.astype(int), title="Completeness")
             self.check_diagnostics_directory()
             plt.savefig("diagnostics/generated_completeness.pdf")
+            plt.close()
             # theta distribution
-            plt.clf()
+            fig = plt.figure()
             plt.hist(thetas, bins=int(np.sqrt(self.completeness_len)))
             plt.title(r"$\theta$ distribution")
             plt.xlabel(r'$\theta$ [deg]')
             plt.savefig("diagnostics/generated_theta_dist.pdf")
+            plt.close()
             # theta distribution
-            plt.clf()
+            fig = plt.figure()
             plt.hist(phis, bins=int(np.sqrt(self.completeness_len)))
             plt.title(r"$\phi$ distribution")
             plt.xlabel(r'$\phi$ [deg]')
             plt.savefig("diagnostics/generated_phi_dist.pdf")
-        """
+            plt.close()
         return [np.array(thetas), np.array(phis)]
             
     # generate gaussian distributed r values
