@@ -47,16 +47,20 @@ class catalog:
         self._clumps_flat = clumps_flat
 
     def flatten(self):
-        rs     = []
-        decs   = []
-        ras    = []
-        types  = []
+        rs      = []
+        decs    = []
+        ras     = []
+        types   = []
+        parents = []
+        names   = []
         try:
             for key in self.centers:
                 rs.append(self.centers[key].r)
                 decs.append(self.centers[key].dec)
                 ras.append(self.centers[key].ra)
                 types.append(self.centers[key].TYPE)
+                parents.append(self.centers[key].parent)
+                names.append(self.centers[key].name)
         except Exception as e:
             no_centers = True
         try:
@@ -65,6 +69,8 @@ class catalog:
                 decs.append(self.rims[key].dec)
                 ras.append(self.rims[key].ra)
                 types.append(self.rims[key].TYPE)
+                parents.append(self.rims[key].parent)
+                names.append(self.rims[key].name)
         except Exception as e:
             no_rims = True
         try:
@@ -73,6 +79,8 @@ class catalog:
                 decs.append(self.flats[key].dec)
                 ras.append(self.flats[key].ra)
                 types.append(self.flats[key].TYPE)
+                parents.append(self.flats[key].parent)
+                names.append(self.flats[key].name)
         except Exception as e:
             no_flats = True
         try:
@@ -81,6 +89,8 @@ class catalog:
                 decs.append(self.clumps_center[key].dec)
                 ras.append(self.clumps_center[key].ra)
                 types.append(self.clumps_center[key].TYPE)
+                parents.append(self.clumps_center[key].parent)
+                names.append(self.clumps_center[key].name)
         except Exception as e:
             no_cc = True
         try:
@@ -89,9 +99,11 @@ class catalog:
                 decs.append(self.clumps_flat[key].dec)
                 ras.append(self.clumps_flat[key].ra)
                 types.append(self.clumps_flat[key].TYPE)
+                parents.append(self.clumps_flat[key].parent)
+                names.append(self.clumps_flat[key].name)
         except Exception as e:
             no_cf = True
-        return rs, ras, decs, types
+        return rs, ras, decs, types, parents, names
 
     def plot(self, idx):
         # the position of the galaxy with idx is retrieved first

@@ -566,7 +566,7 @@ class GeneralTools():
         r_center, theta_center, phi_center = self.generate_galaxies(self.n_center)
         center_galaxies = {}
         for i in range(self.n_center):
-            center_galaxies["cen_{}".format(i)] = galaxy(theta=theta_center[i], phi=phi_center[i], r=r_center[i], TYPE=0)
+            center_galaxies["cen_{}".format(i)] = galaxy(theta=theta_center[i], phi=phi_center[i], r=r_center[i], TYPE=0, name="cen_{}".format(i))
         self.catalog.centers = center_galaxies
         return
         
@@ -685,7 +685,7 @@ class GeneralTools():
                 if self.completeness[pixel] == 1:
                     curr_rim = self.fromCartesianVector(curr_rim)
                     rim_galaxies["rim_{}_{}".format(i, curr_rim_cnt)] = galaxy(theta=curr_rim[1], phi=curr_rim[2], r=curr_rim[0],
-                                                                               parent="cen_{}".format(i), TYPE=1)
+                                                                               parent="cen_{}".format(i), TYPE=1, name="rim_{}_{}".format(i, curr_rim_cnt))
                     curr_center_galaxy_childs.append("rim_{}_{}".format(i, curr_rim_cnt))
                     curr_rim_cnt += 1
                     curr_r_list.append(curr_r)
@@ -727,7 +727,7 @@ class GeneralTools():
             r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_rand)
         flat_galaxies = {}
         for i, _ in enumerate(r_flat):
-            flat_galaxies["flat_{}".format(i)] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2)
+            flat_galaxies["flat_{}".format(i)] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2, name="flat_{}".format(i))
         self.catalog.flats = flat_galaxies
         return r_flat, theta_flat, phi_flat
 
@@ -823,7 +823,8 @@ class GeneralTools():
                         curr_seed_galaxy_childs.append("cenClump_{}_-1_{}".format(idx, j))
                         # append the new generated clump the object
                         clumps_center["cenClump_{}_-1_{}".format(idx, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
-                                                                                   parent="cen_{}".format(idx), TYPE=3)
+                                                                                   parent="cen_{}".format(idx), TYPE=3,
+                                                                                   name="cenClump_{}_-1_{}".format(idx, j))
             # replace the child list of the seed galaxy.
             # it is safe, the new childs are appended to the existing list of childs
             curr_seed_galaxy.childs = curr_seed_galaxy_childs
@@ -874,8 +875,10 @@ class GeneralTools():
                             curr_clump = self.fromCartesianVector(curr_clump)
                             curr_seed_galaxy_childs.append("cenClump_{}_{}_{}".format(seed_idx1, seed_idx2, j))
                             # append the new generated clump the object
-                            clumps_center["cenClump_{}_{}_{}".format(seed_idx1, seed_idx2, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
-                                                                                                        parent="rim_{}_{}".format(seed_idx1, seed_idx2), TYPE=3)
+                            clumps_center["rimClump_{}_{}_{}".format(seed_idx1, seed_idx2, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2],
+                                                                                                        r=curr_clump[0],
+                                                                                                        parent="rim_{}_{}".format(seed_idx1, seed_idx2),
+                                                                                                        TYPE=4, name="rimClump_{}_{}_{}".format(seed_idx1, seed_idx2, j))
                 # replace the child list of the seed galaxy.
                 # it is safe, the new childs are appended to the existing list of childs
                 curr_seed_galaxy.childs = curr_seed_galaxy_childs
@@ -936,7 +939,8 @@ class GeneralTools():
                         curr_seed_galaxy_childs.append("flatClump_{}_-1_{}".format(idx, j))
                         # append the new generated clump the object
                         clumps_flat["flatClump_{}_-1_{}".format(idx, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
-                                                                                  parent="flat_{}".format(idx), TYPE=4)
+                                                                                  parent="flat_{}".format(idx), TYPE=5,
+                                                                                  name="flatClump_{}_-1_{}".format(idx, j))
             # replace the child list of the seed galaxy.
             # it is safe, the new childs are appended to the existing list of childs
             curr_seed_galaxy.childs = curr_seed_galaxy_childs
@@ -996,18 +1000,20 @@ class GeneralTools():
                 filename = self.fname_mock
             else:
                 filename = self.fname_random
-        rs, ras, decs, types = self.catalog.flatten()
+        rs, ras, decs, types, parents, names = self.catalog.flatten()
         LUT = self.generate_LUT_r2z()
         zs  = LUT(rs)
         ws  = np.ones(len(zs))
         # acceptance test here. should it be done for individual types?
         if self.acceptance:
             accepted_indices = self.check_z_acceptance(zs)
-            zs    = np.asarray(zs)[accepted_indices]
-            ras   = np.asarray(ras)[accepted_indices]
-            decs  = np.asarray(decs)[accepted_indices]
-            types = np.asarray(types)[accepted_indices]
-            ws    = np.asarray(ws)[accepted_indices]
+            zs      = np.asarray(zs)[accepted_indices]
+            ras     = np.asarray(ras)[accepted_indices]
+            decs    = np.asarray(decs)[accepted_indices]
+            types   = np.asarray(types)[accepted_indices]
+            parents = np.asarray(parents)[accepted_indices]
+            names   = np.asarray(names)[accepted_indices]
+            ws      = np.asarray(ws)[accepted_indices]
         # We also write the output in fits format
         if os.path.isfile(filename):
             print("a file with the designated name already exists... please remove the file first")
@@ -1033,7 +1039,9 @@ class GeneralTools():
         col3 = fits.Column(name="dec", array=decs, format='E')
         col4 = fits.Column(name="weight", array=ws, format='E')
         col5 = fits.Column(name="TYPE", array=types, format='J')
-        cols = fits.ColDefs([col1, col2, col3, col4, col5])
+        col6 = fits.Column(name="parent", array=parents, format='A16')
+        col7 = fits.Column(name="name", array=names, format='A16')
+        cols = fits.ColDefs([col1, col2, col3, col4, col5, col6, col7])
         hdu  = fits.BinTableHDU.from_columns(cols, header=header)
         hdu.writeto(filename)
 
