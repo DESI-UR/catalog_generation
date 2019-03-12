@@ -49,9 +49,9 @@ class GeneralTools():
         self.getConfig()
         self.get_template()
         self.get_mask()
-        self.flat_clump_r_dist, _   = np.histogram([], bins=50, range=(0, 200))
-        self.center_clump_r_dist, _ = np.histogram([], bins=50, range=(0, 200))
-        self.rim_clump_r_dist, _    = np.histogram([], bins=50, range=(0, 200))
+        self.flat_clump_r_dist, _   = np.histogram([], bins=100, range=(0, 100))
+        self.center_clump_r_dist, _ = np.histogram([], bins=100, range=(0, 100))
+        self.rim_clump_r_dist, _    = np.histogram([], bins=100, range=(0, 100))
         self.rim_BAO_r_dist, _      = np.histogram([], bins=100, range=(100, 200))
         
     def setDiagnostics(self, diagnostics):
@@ -322,7 +322,7 @@ class GeneralTools():
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             fit = plt.figure()
-            plt.hist(flat_r)
+            plt.hist(flat_r, histtype='step')
             plt.xlabel("r [Mpc]")
             plt.title("Flat r distribution")
             plt.savefig("diagnostics/r_distribution.pdf")
@@ -366,7 +366,7 @@ class GeneralTools():
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             fig = plt.figure()
-            plt.hist(rlist)
+            plt.hist(rlist, histtype='step')
             plt.xlabel("r [Mpc]")
             plt.savefig("diagnostics/r_distribution.pdf")
             plt.close()
@@ -466,11 +466,11 @@ class GeneralTools():
             self.check_diagnostics_directory()
             fig = plt.figure(figsize=(6,6))
             plt.hist(template_z, bins=num_bins, density=True, weights=template_w, range=(self.z_min, self.z_max),
-                     label="Template distribution", alpha=.3)
+                     label="Template distribution", alpha=.3, histtype='step')
             plt.hist(z_test, bins=num_bins, density=True, range=(self.z_min, self.z_max),
-                     label="Distribution before acceptance", alpha=.3)
+                     label="Distribution before acceptance", alpha=.3, histtype='step')
             plt.hist(z_test[passed_acceptance], bins=num_bins, density=True, range=(self.z_min, self.z_max),
-                     label="Distribution after acceptance", alpha=.3)
+                     label="Distribution after acceptance", alpha=.3, histtype='step')
             plt.xlabel("Redshift [z]")
             plt.legend()
             plt.savefig("diagnostics/acceptance_stats.pdf")
@@ -530,14 +530,14 @@ class GeneralTools():
             plt.close()
             # theta distribution
             fig = plt.figure()
-            plt.hist(thetas, bins=int(np.sqrt(self.completeness_len)))
+            plt.hist(thetas, bins=int(np.sqrt(self.completeness_len)), histtype='step')
             plt.title(r"$\theta$ distribution")
             plt.xlabel(r'$\theta$ [deg]')
             plt.savefig("diagnostics/generated_theta_dist.pdf")
             plt.close()
             # theta distribution
             fig = plt.figure()
-            plt.hist(phis, bins=int(np.sqrt(self.completeness_len)))
+            plt.hist(phis, bins=int(np.sqrt(self.completeness_len)), histtype='step')
             plt.title(r"$\phi$ distribution")
             plt.xlabel(r'$\phi$ [deg]')
             plt.savefig("diagnostics/generated_phi_dist.pdf")
@@ -566,7 +566,7 @@ class GeneralTools():
         r_center, theta_center, phi_center = self.generate_galaxies(self.n_center)
         center_galaxies = {}
         for i in range(self.n_center):
-            center_galaxies["cen_{}".format(i)] = galaxy(theta=theta_center[i], phi=phi_center[i], r=r_center[i], TYPE=0)
+            center_galaxies["cen_{}".format(i)] = galaxy(theta=theta_center[i], phi=phi_center[i], r=r_center[i], TYPE=0, name="cen_{}".format(i))
         self.catalog.centers = center_galaxies
         return
         
@@ -685,7 +685,7 @@ class GeneralTools():
                 if self.completeness[pixel] == 1:
                     curr_rim = self.fromCartesianVector(curr_rim)
                     rim_galaxies["rim_{}_{}".format(i, curr_rim_cnt)] = galaxy(theta=curr_rim[1], phi=curr_rim[2], r=curr_rim[0],
-                                                                               parent="cen_{}".format(i), TYPE=1)
+                                                                               parent="cen_{}".format(i), TYPE=1, name="rim_{}_{}".format(i, curr_rim_cnt))
                     curr_center_galaxy_childs.append("rim_{}_{}".format(i, curr_rim_cnt))
                     curr_rim_cnt += 1
                     curr_r_list.append(curr_r)
@@ -727,7 +727,7 @@ class GeneralTools():
             r_flat, theta_flat, phi_flat = self.generate_galaxies(self.n_rand)
         flat_galaxies = {}
         for i, _ in enumerate(r_flat):
-            flat_galaxies["flat_{}".format(i)] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2)
+            flat_galaxies["flat_{}".format(i)] = galaxy(theta=theta_flat[i], phi=phi_flat[i], r=r_flat[i], TYPE=2, name="flat_{}".format(i))
         self.catalog.flats = flat_galaxies
         return r_flat, theta_flat, phi_flat
 
@@ -799,7 +799,7 @@ class GeneralTools():
             # we move the calculated distances by 1Mpc to have a realistic clustering
             clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
             if self.diagnostics or diagnostics:
-                center_clump_r_dist, _    = np.histogram(clump_r, bins=50, range=(0, 200))
+                center_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                 self.center_clump_r_dist += center_clump_r_dist
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
@@ -823,7 +823,8 @@ class GeneralTools():
                         curr_seed_galaxy_childs.append("cenClump_{}_-1_{}".format(idx, j))
                         # append the new generated clump the object
                         clumps_center["cenClump_{}_-1_{}".format(idx, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
-                                                                                   parent="cen_{}".format(idx), TYPE=3)
+                                                                                   parent="cen_{}".format(idx), TYPE=3,
+                                                                                   name="cenClump_{}_-1_{}".format(idx, j))
             # replace the child list of the seed galaxy.
             # it is safe, the new childs are appended to the existing list of childs
             curr_seed_galaxy.childs = curr_seed_galaxy_childs
@@ -852,7 +853,7 @@ class GeneralTools():
                 # we move the calculated distances by 1Mpc to have a realistic clustering
                 clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
                 if self.diagnostics or diagnostics:
-                    rim_clump_r_dist, _    = np.histogram(clump_r, bins=50, range=(0, 200))
+                    rim_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                     self.rim_clump_r_dist += rim_clump_r_dist
                 clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
                 clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
@@ -874,8 +875,10 @@ class GeneralTools():
                             curr_clump = self.fromCartesianVector(curr_clump)
                             curr_seed_galaxy_childs.append("cenClump_{}_{}_{}".format(seed_idx1, seed_idx2, j))
                             # append the new generated clump the object
-                            clumps_center["cenClump_{}_{}_{}".format(seed_idx1, seed_idx2, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
-                                                                                                        parent="rim_{}_{}".format(seed_idx1, seed_idx2), TYPE=3)
+                            clumps_center["rimClump_{}_{}_{}".format(seed_idx1, seed_idx2, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2],
+                                                                                                        r=curr_clump[0],
+                                                                                                        parent="rim_{}_{}".format(seed_idx1, seed_idx2),
+                                                                                                        TYPE=4, name="rimClump_{}_{}_{}".format(seed_idx1, seed_idx2, j))
                 # replace the child list of the seed galaxy.
                 # it is safe, the new childs are appended to the existing list of childs
                 curr_seed_galaxy.childs = curr_seed_galaxy_childs
@@ -912,7 +915,7 @@ class GeneralTools():
             # we move the calculated distances by 1Mpc to have a realistic clustering
             clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
             if self.diagnostics or diagnostics:
-                flat_clump_r_dist, _    = np.histogram(clump_r, bins=50, range=(0, 200))
+                flat_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                 self.flat_clump_r_dist += flat_clump_r_dist
             clump_phi        = np.random.uniform(0., 360., n_clump_to_inject)
             clump_theta      = np.arccos(np.random.uniform(-1., 1., n_clump_to_inject))*RAD2DEG-90.
@@ -936,7 +939,8 @@ class GeneralTools():
                         curr_seed_galaxy_childs.append("flatClump_{}_-1_{}".format(idx, j))
                         # append the new generated clump the object
                         clumps_flat["flatClump_{}_-1_{}".format(idx, j)] = galaxy(theta=curr_clump[1], phi=curr_clump[2], r=curr_clump[0],
-                                                                                  parent="flat_{}".format(idx), TYPE=4)
+                                                                                  parent="flat_{}".format(idx), TYPE=5,
+                                                                                  name="flatClump_{}_-1_{}".format(idx, j))
             # replace the child list of the seed galaxy.
             # it is safe, the new childs are appended to the existing list of childs
             curr_seed_galaxy.childs = curr_seed_galaxy_childs
@@ -945,13 +949,14 @@ class GeneralTools():
 
         # if diagnostics is enables, plot the distribution of the distances of clumps with respect to their seeds
         if self.diagnostics or diagnostics:
-            values     = np.linspace(0, 200, 51)
+            values     = np.linspace(0, 100, 101)
             mid_values = (values[1:]+values[:-1])*0.5*self.h0
             self.check_diagnostics_directory()
             fig = plt.figure(figsize=(6,6))
             plt.plot(mid_values, self.flat_clump_r_dist/np.sum(self.flat_clump_r_dist), label="flat seeded clumps", color='black')
             plt.plot(mid_values, self.center_clump_r_dist/np.sum(self.center_clump_r_dist), '--', label="center seeded clumps", color='black')
             plt.plot(mid_values, self.rim_clump_r_dist/np.sum(self.rim_clump_r_dist), '-.', label="rim seeded clumps", color='black')
+            plt.yscale("log")
             plt.title('Distribution of the distances of clumping galaxies \n with respect to their seeds')
             plt.xlabel("Distance [$h^{-1}$Mpc]")
             plt.legend()
@@ -961,9 +966,9 @@ class GeneralTools():
             average_flat_clump_r   = np.average(mid_values, weights=self.flat_clump_r_dist/np.sum(self.flat_clump_r_dist))
             average_center_clump_r = np.average(mid_values, weights=self.center_clump_r_dist/np.sum(self.center_clump_r_dist))
             average_rim_clump_r    = np.average(mid_values, weights=self.rim_clump_r_dist/np.sum(self.rim_clump_r_dist))
-            print("Average distance for flat clumps  : {:.2f} h^-1 Mpc".format(average_flat_clump_r*self.h0))
-            print("Average distance for center clumps: {:.2f} h^-1 Mpc".format(average_center_clump_r*self.h0))
-            print("Average distance for rim clumps   : {:.2f} h^-1 Mpc".format(average_rim_clump_r*self.h0))
+            print("Average distance for flat clumps  : {:.2f} h^-1 Mpc [{:.2f} Mpc]".format(average_flat_clump_r, average_flat_clump_r/self.h0))
+            print("Average distance for center clumps: {:.2f} h^-1 Mpc [{:.2f} Mpc]".format(average_center_clump_r, average_center_clump_r/self.h0))
+            print("Average distance for rim clumps   : {:.2f} h^-1 Mpc [{:.2f} Mpc]".format(average_rim_clump_r, average_rim_clump_r/self.h0))
             
     def r2z(self, r):
         return [z_at_value(self.cosmo.comoving_distance, curr_r*u.Mpc) for curr_r in r]
@@ -990,24 +995,26 @@ class GeneralTools():
         save_items = {'catalog': self.catalog, 'config': config}
         pickle.dump(save_items, open(filename, "wb"), protocol=-1)
 
-    def write_to_fits(self, filename=None, is_random=False):
+    def write_to_fits(self, filename=None, is_random=False, save_extended=False):
         if filename is None:
             if not is_random:
                 filename = self.fname_mock
             else:
                 filename = self.fname_random
-        rs, ras, decs, types = self.catalog.flatten()
+        rs, ras, decs, types, parents, names = self.catalog.flatten()
         LUT = self.generate_LUT_r2z()
         zs  = LUT(rs)
         ws  = np.ones(len(zs))
         # acceptance test here. should it be done for individual types?
         if self.acceptance:
             accepted_indices = self.check_z_acceptance(zs)
-            zs    = np.asarray(zs)[accepted_indices]
-            ras   = np.asarray(ras)[accepted_indices]
-            decs  = np.asarray(decs)[accepted_indices]
-            types = np.asarray(types)[accepted_indices]
-            ws    = np.asarray(ws)[accepted_indices]
+            zs      = np.asarray(zs)[accepted_indices]
+            ras     = np.asarray(ras)[accepted_indices]
+            decs    = np.asarray(decs)[accepted_indices]
+            types   = np.asarray(types)[accepted_indices]
+            parents = np.asarray(parents)[accepted_indices]
+            names   = np.asarray(names)[accepted_indices]
+            ws      = np.asarray(ws)[accepted_indices]
         # We also write the output in fits format
         if os.path.isfile(filename):
             print("a file with the designated name already exists... please remove the file first")
@@ -1033,7 +1040,12 @@ class GeneralTools():
         col3 = fits.Column(name="dec", array=decs, format='E')
         col4 = fits.Column(name="weight", array=ws, format='E')
         col5 = fits.Column(name="TYPE", array=types, format='J')
-        cols = fits.ColDefs([col1, col2, col3, col4, col5])
+        if save_extended:
+            col6 = fits.Column(name="parent", array=parents, format='A16')
+            col7 = fits.Column(name="name", array=names, format='A16')
+            cols = fits.ColDefs([col1, col2, col3, col4, col5, col6, col7])
+        else:
+            cols = fits.ColDefs([col1, col2, col3, col4, col5])
         hdu  = fits.BinTableHDU.from_columns(cols, header=header)
         hdu.writeto(filename)
 
