@@ -322,7 +322,7 @@ class GeneralTools():
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             fit = plt.figure()
-            plt.hist(flat_r)
+            plt.hist(flat_r, histtype='step')
             plt.xlabel("r [Mpc]")
             plt.title("Flat r distribution")
             plt.savefig("diagnostics/r_distribution.pdf")
@@ -366,7 +366,7 @@ class GeneralTools():
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             fig = plt.figure()
-            plt.hist(rlist)
+            plt.hist(rlist, histtype='step')
             plt.xlabel("r [Mpc]")
             plt.savefig("diagnostics/r_distribution.pdf")
             plt.close()
@@ -466,11 +466,11 @@ class GeneralTools():
             self.check_diagnostics_directory()
             fig = plt.figure(figsize=(6,6))
             plt.hist(template_z, bins=num_bins, density=True, weights=template_w, range=(self.z_min, self.z_max),
-                     label="Template distribution", alpha=.3)
+                     label="Template distribution", alpha=.3, histtype='step')
             plt.hist(z_test, bins=num_bins, density=True, range=(self.z_min, self.z_max),
-                     label="Distribution before acceptance", alpha=.3)
+                     label="Distribution before acceptance", alpha=.3, histtype='step')
             plt.hist(z_test[passed_acceptance], bins=num_bins, density=True, range=(self.z_min, self.z_max),
-                     label="Distribution after acceptance", alpha=.3)
+                     label="Distribution after acceptance", alpha=.3, histtype='step')
             plt.xlabel("Redshift [z]")
             plt.legend()
             plt.savefig("diagnostics/acceptance_stats.pdf")
@@ -530,14 +530,14 @@ class GeneralTools():
             plt.close()
             # theta distribution
             fig = plt.figure()
-            plt.hist(thetas, bins=int(np.sqrt(self.completeness_len)))
+            plt.hist(thetas, bins=int(np.sqrt(self.completeness_len)), histtype='step')
             plt.title(r"$\theta$ distribution")
             plt.xlabel(r'$\theta$ [deg]')
             plt.savefig("diagnostics/generated_theta_dist.pdf")
             plt.close()
             # theta distribution
             fig = plt.figure()
-            plt.hist(phis, bins=int(np.sqrt(self.completeness_len)))
+            plt.hist(phis, bins=int(np.sqrt(self.completeness_len)), histtype='step')
             plt.title(r"$\phi$ distribution")
             plt.xlabel(r'$\phi$ [deg]')
             plt.savefig("diagnostics/generated_phi_dist.pdf")
