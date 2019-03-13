@@ -15,35 +15,39 @@ parser.add_argument("-o", "--output",
                     required=False,
                     default=None)
 parser.add_argument("-d", "--diagnostics",
-                    type=bool,
+                    type=lambda x: (str(x).lower() in ['true','1', 'yes']),
                     help="Flag to get diagnostic messages",
                     required=False,
                     default=False)
 parser.add_argument("-a", "--add_to_rims",
-                    type=bool,
+                    type=lambda x: (str(x).lower() in ['true','1', 'yes']),
                     help="Flag to add clumping galaxies around rim galaxies",
                     required=False,
                     default=False)
 parser.add_argument("-e", "--extended",
-                    type=bool,
+                    type=lambda x: (str(x).lower() in ['true','1', 'yes']),
                     help="Flag to write the extended output for the fits file",
                     required=False,
                     default=False)
 parser.add_argument("-p", "--pickle",
-                    type=bool, help="Flag to write the extended pickle file",
+                    type=lambda x: (str(x).lower() in ['true','1', 'yes']),
+                    help="Flag to write the extended pickle file",
                     required=False,
                     default=False)
-parser.add_argument("-u", "--use_style",
-                    type=bool, help="Flag to use the provided plotting style",
+parser.add_argument("-u", "--style",
+                    type=lambda x: (str(x).lower() in ['true','1', 'yes']),
+                    help="Flag to use the provided plotting style",
                     required=False,
-                    default=True)
+                    default=False)
 args   = parser.parse_args()
+
+print(args)
 
 # Generating Mock Catalogs
 
 # Instantiate the module with the user defined configuration file
 # Detailed information about individual methids are given below as well
-gt = generalTools(args.config, args.diagnostics, use_style=args.use_style)
+gt = generalTools(args.config, args.diagnostics, use_style=args.style)
 
 # Generating central galaxies
 # The function (generate_galaxies) is used to generate the galaxies in the mock catalog. User can choose either to use a
