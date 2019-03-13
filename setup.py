@@ -20,8 +20,8 @@ from setuptools.command.install import install as InstallCommand
 class Install(InstallCommand):
     """ Customized setuptools install command which uses pip."""
     def run(self, *args, **kwargs):
-        import pip
-        pip.main(['install', '.'])
+        from pip._internal import main
+        main(['install', '.'])
         InstallCommand.run(self, *args, **kwargs)
 
 #
