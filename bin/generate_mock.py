@@ -41,8 +41,6 @@ parser.add_argument("-u", "--style",
                     default=False)
 args   = parser.parse_args()
 
-print(args)
-
 # Generating Mock Catalogs
 
 # Instantiate the module with the user defined configuration file
@@ -74,7 +72,7 @@ gt.generate_clumps(args.add_to_rims)
 # there are two options for user. One output file is in fits format to be used with other TPCF codes
 # the other output is in pickle format and it stores detailed information about the mock catalog generated
 gt.write_to_fits(filename=args.output, save_extended=args.extended)
-
+    
 # If the user want to store everything is the catalog structure (galaxies with their corresponding rims, clumps and all)
 # the user can uncomment the following line. Be cautious that this requires considerable memory and it may fail if used on
 # simple laptop or desktop computer
