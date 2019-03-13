@@ -20,5 +20,6 @@ env:
 
 install:
 - pip install -r requirements.txt
+- python setup.py install
 
-script: cd examples; python mock_catalog_generation.py configs/test.cfg
+script: generate_mock.py examples/configs/test.cfg
