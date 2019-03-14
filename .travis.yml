@@ -1,27 +1,20 @@
 os:
 - linux
-
 language: python
-
 sudo: false
-
 python:
 - 3.5
 - 3.6
 - 3.7-dev
-
 env:
   global:
   - DEBUG=True
-  - secure: Zkwnbn4PLeCTf0FdM4Cxmb1X1jeZj6uuqb0leF/si5fEUseD6QIO9EbG6MHeX14A7aOauozpxMxt2sLfftTBdon2z9BXBMd4X7gL7Q1Nhj4pvleGMQYKFB3UeRRtIEsGWVRrpkr9cnmFEq+AG3X8B5apD7MI0ctXat9T+LPHt+YfAgK2pPTxZkKNnYrb7wIDis+XfFfFJrZlLbMF36bgAWCcti56f+WQYvR4CNMIjlTPbZbb6IHONSNt5DAg0yztpPm064AR60b9pRyLj8eQ9KDcgIjWduChusdPg8iZqRForlQ2BP0O4il3Uy+SOYXsy2DHX8LG0mmXtCjMpxgqeajs7xh3xkjMg61naN7TDCiT48fmeCcI48oW3hqEUfcovs8h5XgfX9Jam39nfROCHRxymIYwCsh4gFI3QceH95677yfUaH7IiWVs2D6CKru0A4svS4UwHJZ9FTXD9ZKfSqw6JSj7Qo+Ce+qk0qZXhfnqk1dD8otM0ByjPAqdIc+fkKivNAp7xy5ScCimFUxSKukQaB909OR+1lrL9/JQJ07eRedJgXa35InHVajQNkgKPYQKD6RymnvCJFXkYvebsXOaAfN/JnVKQtWY3/15kzoqx6y7C7hbNc+c+06HPSC0SsDp5DxareefAwviplnMc2o4N/rqBeHlEXW85GZXxJc=
-
+  - secure: a3PJ47Zyf9lqAiowqKdiJVpO6XwY8j021LL0k15vdwk52fDcx8HGmkuHYwFf/Ja7N1ht2DA3TqzV2+UDOAwoRVhVTD+Mp/n/MctPq1bPKopccioN3jMlyjzqpz6kYpBmFStlY7AglFytpGkbHCO071ZxzfeaN4ibdbpt7Q6JcTVCJLFlo1WHjxCHa8TqtsE2lXbarsP87kiIX8xlN+XniboUg11aza6sZfEdRd2k30mpbd8YAKFVN97a3qaBkrD29rpn09GxMgLd8/VwR0wPt3kCm2EwbM3+FuWFMPicsoccQYUTjOOq6ZUG5RUuwxd1pTV0aiAKnDwPqlPuXz3f44ig/zi22+U99YMJc52CtVBIfA+G0aWVMmzRcLZ+7ZozwgcrKcqqGzchGcCm1KN0uuiYpbpcmxtBiJHTchHVb3eZuhpUkDWmjcDYeP1laMStkJv/liigun/INUhg+vA73tFUkEptpE1aHt0UQn07kNZZw+NE40FBiUM7lVzGP8aoQjp8hYf7+tOhsLi7khw71WGulmMQt8ed+rkpULKSztzdszNIXjXWxYebrikIHTozp+x99N9adXPdtij8uyQCIIZ9ZfOG2hVL2P0gJbZJilCt+C+54BPpvqhRR3EVGJu38QIdhmuc2k9DZmovUDImE+xx4i2W+q4FOO4L8bVg6BM=
 install:
 - pip install --upgrade pip
 - pip install -r requirements.txt
 - travis_wait 30 python setup.py install
-
 script:
 - generate_mock.py -c examples/configs/test.cfg -d 1 -a 1 -e 1 -u 0
-
 after_success:
 - sh push_new_version.sh
