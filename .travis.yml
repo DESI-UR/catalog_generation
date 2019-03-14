@@ -30,4 +30,4 @@ after_success:
 - git config --global user.email "travis@travis-ci.org"
 - git config --global user.name "Travis CI"
 - git commit -m "after the successful build, updating the version number" py/paramock/_version.py
-- git push origin development
+- git push
