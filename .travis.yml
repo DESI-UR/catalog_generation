@@ -6,10 +6,6 @@ python:
 - 3.5
 - 3.6
 - 3.7-dev
-env:
-  global:
-  - DEBUG=True
-  - secure: jch/LqZ6K6uFnRw8EpdI6wdR+n/lKOCBfi4eJfUJZITYvY1B4vjNig+E5tXLOh3Xcd7b4m19Ig7oinP0/GJrWqw1XJ8T42UjIt5SbxpPne4nDaOyWQRcs4R4guuFlaCf8ghrjh+DOjAEY0olx5fLiWuj+FBfdK3A/trXLAvc+ZDsLttmTtkC5LWrD+E5xgSwsgW7A7LP2yLLbXyQoARSHy2rmw/56j29ths7k98CyPYiJ9DJY1WRscyWXWslFQj+YAmT6cbzTjC5l83hgeEefAOLtqy46/fWChapn03MNvkTKr9zRiAXhy/ruAHhu0aLUxKrHc7UMbh/yl/EhzdGkt4cFi2Z7nBZezZkKBgvpRXO7YQQyei08eFGNHRS6l/Jf/cwkYuJ2CNBsa2abdDAC7PEo1hAhChRsUln/7aWwVQmlE2w6L3O6NC+SII/UiqCqdmp8BlJbFjp/XBX+TQjopOkOvLLhXiLJyNAzZPkjxrs5tp5Q46seq2BSqT2dilRUN5GrpAK5RA7CUi2QKbkA8uTg3xn3nJ7JQsYNWd3FlspaP0wzJJOABfke5bpIqnpLq4u8vznQOyo01YLtKkotwem9PJkqq63TEfDlruP8IrDRoiMi9DLdgq2SlQ3XCSsY3auxLLkBsLnEBQi5gpUyFpdkBnwdLONFow+VifNivs=
 install:
 - pip install --upgrade pip
 - pip install -r requirements.txt
@@ -18,3 +14,6 @@ script:
 - generate_mock.py -c examples/configs/test.cfg -d 1 -a 1 -e 1 -u 0
 after_success:
 - sh push_new_version.sh
+env:
+  global:
+    secure: Oc52WUJbayYLoaBREYytj/dXjanzJaxVOS3K/GY/nY7iOZt7zYJSVA+zPtn27yqr5Cpuk4V8afhMUyTqZQwvzpzzcw4K5iOrgqSqM5N2Hji5ZG97yA6xIctPIE4zNlJUUjw/9sgE5W7GgtjIFwYC7cwvA5SdqdrM8TN6KK5NW5bo17VvZH8fILXbZZxa8lMuKuxXY7WKSEZjLjhUHGKXou9ERRaRiUiNVSXNab8oBUk+8IUet6xNyGSKVKx13s8fBpx2kkTSEQMYJSG0FuNFRQW8OtdU+Q1/VLnM3rKZj+uZHpre+YlvVjPuf3arIXbh7NMYdzFnIZf6AFH1cdXKyMtoquy89dGNytEG6diLPH0rGW/QUjZNZcOYlvlhtjLe6BZkqN67XbbsYm2wZijYba6AIKfLGAmpnNv+JA/Je5rMRFa25G52q4/jfayaQtBBczKoGq8c25AInFJ3iTktmPtoy0NmrbukUcT2zOACX1BmaEQrmC3Hvu+DJ1mHQojBuF96lbTed81theEaQA8VB1kWUsNiDH4vfe/RE/y6OUPJ7j20s85UJgj1UWxEJsMCxkhTJS9J84XEyQsxQYK5bakFk6etIiIgfuSmkP8aGtt3RzWhpMJwp7rppqohDFLR9kXONhLrSxAdvKNScs2EjLglGMQtcia7N8KQCC0K3E0=
