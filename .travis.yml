@@ -1,22 +1,19 @@
 os:
 - linux
 
-
 language: python
 
-# Travis tech support recommended trying sudo true for more stable builds.
-# Seems odd, but maybe they isolate us from other users more if we need sudo.
 sudo: false
 
-# try for different python versions
 python:
 - 3.5
 - 3.6
 - 3.7-dev
 
 env:
-    global:
-        - DEBUG=True
+  global:
+  - DEBUG=True
+  - secure: Zkwnbn4PLeCTf0FdM4Cxmb1X1jeZj6uuqb0leF/si5fEUseD6QIO9EbG6MHeX14A7aOauozpxMxt2sLfftTBdon2z9BXBMd4X7gL7Q1Nhj4pvleGMQYKFB3UeRRtIEsGWVRrpkr9cnmFEq+AG3X8B5apD7MI0ctXat9T+LPHt+YfAgK2pPTxZkKNnYrb7wIDis+XfFfFJrZlLbMF36bgAWCcti56f+WQYvR4CNMIjlTPbZbb6IHONSNt5DAg0yztpPm064AR60b9pRyLj8eQ9KDcgIjWduChusdPg8iZqRForlQ2BP0O4il3Uy+SOYXsy2DHX8LG0mmXtCjMpxgqeajs7xh3xkjMg61naN7TDCiT48fmeCcI48oW3hqEUfcovs8h5XgfX9Jam39nfROCHRxymIYwCsh4gFI3QceH95677yfUaH7IiWVs2D6CKru0A4svS4UwHJZ9FTXD9ZKfSqw6JSj7Qo+Ce+qk0qZXhfnqk1dD8otM0ByjPAqdIc+fkKivNAp7xy5ScCimFUxSKukQaB909OR+1lrL9/JQJ07eRedJgXa35InHVajQNkgKPYQKD6RymnvCJFXkYvebsXOaAfN/JnVKQtWY3/15kzoqx6y7C7hbNc+c+06HPSC0SsDp5DxareefAwviplnMc2o4N/rqBeHlEXW85GZXxJc=
 
 install:
 - pip install --upgrade pip
@@ -27,8 +24,10 @@ script:
 - generate_mock.py -c examples/configs/test.cfg -d 1 -a 1 -e 1 -u 0
 
 after_success:
+- git clone https://${GH_TOKEN}@github.com/DESI-UR/catalog_generation.git -b development catgen-dev
+- cd catgen-dev
 - python py/paramock/versioning.py
 - git config --global user.email "travis@travis-ci.org"
 - git config --global user.name "Travis CI"
 - git commit -m "after the successful build, updating the version number" py/paramock/_version.py
-- git push --quiet origin development
+- git push origin development
