@@ -16,6 +16,7 @@ import sys
 from distutils.command.sdist import sdist as DistutilsSdist
 from setuptools import setup, find_packages
 from setuptools.command.install import install as InstallCommand
+from py.paramock import versioning as ver
 
 class Install(InstallCommand):
     """ Customized setuptools install command which uses pip."""
@@ -37,7 +38,10 @@ setup_keywords['author'] = 'Tolga Yapici'
 setup_keywords['author_email'] = 'tyapici@ur.rochester.edu'
 setup_keywords['license'] = 'BSD'
 setup_keywords['url'] = 'https://github.com/DESI-UR/catalog_generation'
-setup_keywords['version'] = '0.1.0'
+setup_keywords['version'] = ver.get_version(out_type='string')
+
+print("Version is set to {}".format(ver.get_version(out_type='string')))
+
 #
 # END OF SETTINGS THAT NEED TO BE CHANGED.
 #
