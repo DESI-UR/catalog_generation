@@ -40,7 +40,7 @@ where r is the distance of the center of the cluster, A is a normalization param
 
 ### Using executables
 
-There are two executables provided within the package. These executables are explain in #using-modules. 
+There are two executables provided within the package. The insight of the executables is explain in the following section. 
 
 ### Using modules
 
