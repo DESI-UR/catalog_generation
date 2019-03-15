@@ -1,11 +1,12 @@
 # Fast Mock Catalog Generation
 
 master: [![Build Status](https://travis-ci.com/DESI-UR/catalog_generation.svg?branch=master)](https://travis-ci.com/DESI-UR/catalog_generation) [![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/master)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/master)
+
 development: [![Build Status](https://travis-ci.com/DESI-UR/catalog_generation.svg?branch=development)](https://travis-ci.com/DESI-UR/catalog_generation) [![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/development)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/development)
 
 <!-- toc -->
 * [Requirements](#requirements)
-* [Installtion](#installation)
+* [Installation](#installation)
 * [Introduction](#introduction)
 * [Usage](#usage)
   * [Using Executables](#using-executables)
@@ -23,6 +24,14 @@ The version of the python packages listed below are the tested version. Any rece
 * Matplotlib (version 2.0.0)
 
 Generating the mock requires a completeness map and a redshift distribution. An example completeness map is provided at `examples/data/example_coverage.npz`. As for the redshift distribution, user can use a data challenge file which has the information for individual galaxies or use a fits file similar to the one provided at `examples/data/example_zcat.fits`. 
+
+## Installation
+The installation procude is as follows:
+```
+https://github.com/DESI-UR/catalog_generation.git
+cd catalog_generation
+python setup.py install
+```
 
 ## Introduction
 
