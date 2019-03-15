@@ -18,6 +18,8 @@ import os
 import pickle
 from scipy.interpolate import interp1d
 
+#from paramock import galaxy
+#from paramock import catalog
 from galaxy import galaxy
 from catalog import catalog
 
@@ -29,7 +31,7 @@ RAD2DEG = 1./DEG2RAD
 
 class GeneralTools():
 
-    def __init__(self, configFile, diagnostics=False, acceptance=True):
+    def __init__(self, configFile, diagnostics=False, acceptance=True, use_style=True):
         """
         Initialize the tools using a configuration file
 
@@ -53,6 +55,8 @@ class GeneralTools():
         self.center_clump_r_dist, _ = np.histogram([], bins=100, range=(0, 100))
         self.rim_clump_r_dist, _    = np.histogram([], bins=100, range=(0, 100))
         self.rim_BAO_r_dist, _      = np.histogram([], bins=100, range=(100, 200))
+        if use_style:
+            import style
         
     def setDiagnostics(self, diagnostics):
         """
@@ -296,7 +300,13 @@ class GeneralTools():
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             fig = plt.figure()
-            hp.mollview(self.completeness, title="Completeness")
+            cvals = [0, 1]
+            colors= ['white', 'black']
+            norm  = plt.Normalize(min(cvals), max(cvals))
+            tuples= list(zip(map(norm,cvals), colors))
+            cmap  = mpl.colors.LinearSegmentedColormap.from_list("", tuples)
+            hp.mollview(self.completeness, title="Completeness", cbar=False, flip='geo', margins=(0,0,0,0), cmap=cmap)
+            hp.graticule()
             plt.savefig("diagnostics/completeness.pdf")
             plt.close()
             
@@ -518,13 +528,20 @@ class GeneralTools():
                 pixels.append(curr_pix)
                 num_obs += 1
         # plot the distribution for diagnostics
-        if diagnostics or self.diagnostics:
+        if diagnostics:
             self.check_diagnostics_directory()
             # completeness plot
             fig = plt.figure()
-            pixels = np.zeros([12*self.nside**2])
-            pixels[pixlist] = 1
-            hp.mollview(pixels.astype(int), title="Completeness")
+            cvals  = [0, 1]
+            colors = ["white", "blue"]
+            norm   = plt.Normalize(min(cvals),max(cvals))
+            tuples = list(zip(map(norm,cvals), colors))
+            cmap   = mpl.colors.LinearSegmentedColormap.from_list("", tuples)
+            allpixels = np.zeros([12*self.nside**2])
+            print(np.asarray(pixels).flatten())
+            allpixels[np.asarray(pixels).flatten()] = 1
+            hp.mollview(allpixels.astype(int), cbar=False, title='Completeness', flip='geo', margins=(0,0,0,0), cmap=cmap)
+            hp.graticule()
             self.check_diagnostics_directory()
             plt.savefig("diagnostics/generated_completeness.pdf")
             plt.close()
