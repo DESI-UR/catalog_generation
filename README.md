@@ -51,7 +51,7 @@ optional arguments:
                         Configuration filename
   -o OUTPUT, --output OUTPUT
                         Output filename (this overwrites the output filename
-                        in the configuration file
+                        in the configuration file)
   -d DIAGNOSTICS, --diagnostics DIAGNOSTICS
                         Flag to get diagnostic messages
   -a ADD_TO_RIMS, --add_to_rims ADD_TO_RIMS
@@ -65,6 +65,19 @@ optional arguments:
 ```
 `--config` argument is required for the configuration to be used.
 Other arguments are optional and the explanation is provided with `--help`.
+
+As for the random catalog generation, the list of arguments is similar to mock catalog generation but limited.
+```
+usage: generate_random.py [-h] -c CONFIG [-o OUTPUT]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        Configuration filename
+  -o OUTPUT, --output OUTPUT
+                        Output filename (this overwrites the output filename
+                        in the configuration file)
+```
 
 ### Using modules
 

@@ -11,7 +11,7 @@ parser.add_argument("-c", "--config",
                     required=True)
 parser.add_argument("-o", "--output",
                     type=str,
-                    help="Output filename (this overwrites the output filename in the configuration file",
+                    help="Output filename (this overwrites the output filename in the configuration file)",
                     required=False,
                     default=None)
 args   = parser.parse_args()
