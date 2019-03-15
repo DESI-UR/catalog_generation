@@ -1,7 +1,10 @@
 # Fast Mock Catalog Generation
 
 [![Build Status](https://travis-ci.com/DESI-UR/catalog_generation.svg?branch=master)](https://travis-ci.com/DESI-UR/catalog_generation)
-[![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/master)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/master)
+
+master: [![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/master)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/master)
+
+development: [![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/development)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/development)
 
 <!-- toc -->
 * [Requirements](#requirements)
