@@ -5,6 +5,7 @@
 
 <!-- toc -->
 * [Requirements](#requirements)
+* [Installtion](#installation)
 * [Introduction](#introduction)
 * [Usage](#usage)
   * [Using Executables](#using-executables)
@@ -39,7 +40,7 @@ where r is the distance of the center of the cluster, A is a normalization param
 
 ### Using executables
 
-There are two executables provided within the package. These executables are explain in (#using-modules). 
+There are two executables provided within the package. These executables are explain in #using-modules. 
 
 ### Using modules
 
