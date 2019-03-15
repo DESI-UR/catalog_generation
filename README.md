@@ -16,7 +16,7 @@ The version of the python packages listed below are the tested version. Any rece
 * SciPy (version 0.19.1)
 * Matplotlib (version 2.0.0)
 
-Generating the mock requires a completeness map and a redshift distribution. An example completeness map is provided at `data/completeness.tar.gz` that user needs to extract. As for the redshift distribution, user can use a data challenge file which has the information for individual galaxies or use a fits file similar to the one provided at `data/example.fits`. 
+Generating the mock requires a completeness map and a redshift distribution. An example completeness map is provided at `examples/data/example_coverage.npz`. As for the redshift distribution, user can use a data challenge file which has the information for individual galaxies or use a fits file similar to the one provided at `examples/data/example_zcat.fits`. 
 
 ## Introduction
 
@@ -31,18 +31,22 @@ f(r) = Ax(r<sub>0</sub>/r)&gamma;
 where r is the distance of the center of the cluster, A is a normalization parameter and r<sub>0</sub> and &gamma; are input parameters.
 
 ## Usage
-The usage is shown in `mock_catalog_generation.py` and `random_catalog_generation.py`.
 
-In order to import packages from the `py` directory, following lines are required in the python script:
+### Using executables
+
+
+### Using modules
+
+The usage is shown in `bin/generate_mock.py` and `bin/generate_random.py`. However, the user can write own executables or use them as template for python notebook use.
+
+In order to import the module, following lines are required in the python script:
 ```
-import sys
-sys.path.append("../py")
-from generation_tools import GenerationTools
+from paramock.paramock import GeneralTools as generalTools
 ```
 
 The examples shown here needs the object created with a configuration file. Example configuration file is at `data/catgen.cfg`
 ```
-gen_tool = GenerationTools(CONFIGURATION_FILE)
+gen_tool = generationTools(CONFIGURATION_FILE, diagnostics=DIAGNOSTICS)
 ```
 
 In the configuration file, user needs to provide either a sample catalog with redshifts or a redshift distribution as `datafile`. The mock and random catalog to be generated within a window given in `angmask`. For the users who do not have such a file or want to generate a catalog in a custom region in the sky, a python script, `examples/generate_completeness_map.py`, is included in the project. This script generates a completeness map for a region of interest. For more complicated completeness maps, users need to write their own scripts considering the data structure shown in `examples/generate_completeness_map.py`
@@ -66,21 +70,17 @@ gen_tool.generate_clumps(add_clumps_to_rims=True)
 ```
 There is no difference in generating both group of clumps, they both use the same power law distribution for their location with respect to the seed galaxy of a clump. The only difference is the number of clumps around a certain type of object. This is controlled by the two parameters in the configuration file: `frac_f2c` and `frac_c2r`. `frac_f2c` defines the fraction of flat seeded clumps to center seeded clumps and `frac_c2r` defines the fraction of center galaxies used with respect to the rim galaxies for the center seed galaxies. If the parameters are not defined in the configuration, `gen_tool` defaults to `None` and use random distributions for the selections
 
-### Final steps
-The galaxies are all generated using a completeness map so that user will only get galaxies in the field of view of an experiment. However, no redshift acceptance is applied until now. The example here shows how a user can apply the redshift acceptance test:
-```
-r2z_function = gt.generate_LUT_r2z()
-z            = r2z_function(r)
-z_acceptance = gt.check_z_acceptance(z)
-z            = z[z_acceptance]
-theta        = theta[z_acceptance]
-phi          = phi[z_acceptance]
-```
-The first line is an interpolator for z-to-r conversion which is faster than using the astropy package for all the values.
-
 ### Saving the output
+The output can be saved in two different formats, fits and pickle. `.fits` output is structured to run analysis easily and the fields stored can be extended to have the name and the parent name of the galaxies with the flag `save_extended`. The following line shows how to save the output in fits format.
+```
+gen_tool.write_to_fits(FILENAME, save_extended=True)
+```
+If the filename is not provided when calling the function, the module will use the filename defined in the configuration file. The second output type, `.pkl`, stores the whole catalog as an object so that the user can use the functions in the catalog and galaxy modules easily for postprocessing.
+```
+gen_tool.write_to_pickle(FILENAME)
+```
+Similarly, when the filename is not provided, the filename in the configuration file will be used after changing the extension to `.pkl`.
 
-Being written
 
 ## Build Test Results
 
