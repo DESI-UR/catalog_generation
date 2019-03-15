@@ -1,9 +1,14 @@
 # Fast Mock Catalog Generation
 
+[![Build Status](https://travis-ci.com/DESI-UR/catalog_generation.svg?branch=master)](https://travis-ci.com/DESI-UR/catalog_generation)
+[![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/master)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/master)
+
 <!-- toc -->
 - [Requirements](#requirements)
 - [Introduction](#introduction)
 - [Usage](#usage)
+-- [Using Executables](#using executables)
+-- [Using Modules](#using modules)
 <!-- tocstop -->
 
 ## Requirements
@@ -34,6 +39,7 @@ where r is the distance of the center of the cluster, A is a normalization param
 
 ### Using executables
 
+There are two executables provided within the package. These executables are explain in (#using modules). 
 
 ### Using modules
 
@@ -82,7 +88,4 @@ gen_tool.write_to_pickle(FILENAME)
 Similarly, when the filename is not provided, the filename in the configuration file will be used after changing the extension to `.pkl`.
 
 
-## Build Test Results
 
-[![Build Status](https://travis-ci.com/DESI-UR/catalog_generation.svg?branch=master)](https://travis-ci.com/DESI-UR/catalog_generation)
-[![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/master)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/master)
