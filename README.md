@@ -26,7 +26,7 @@ The version of the python packages listed below are the tested version. Any rece
 Generating the mock requires a completeness map and a redshift distribution. An example completeness map is provided at `examples/data/example_coverage.npz`. As for the redshift distribution, user can use a data challenge file which has the information for individual galaxies or use a fits file similar to the one provided at `examples/data/example_zcat.fits`. 
 
 ## Installation
-The installation procude is as follows:
+The installation procedure is as follows:
 ```
 https://github.com/DESI-UR/catalog_generation.git
 cd catalog_generation
