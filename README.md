@@ -40,7 +40,31 @@ where r is the distance of the center of the cluster, A is a normalization param
 
 ### Using executables
 
-There are two executables provided within the package. The insight of the executables is explain in the following section. 
+There are two executables provided within the package. The insight of the executables is explain in the following section. The arguments for the executable are shown below:
+```
+usage: generate_mock.py [-h] -c CONFIG [-o OUTPUT] [-d DIAGNOSTICS]
+                        [-a ADD_TO_RIMS] [-e EXTENDED] [-p PICKLE] [-u STYLE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        Configuration filename
+  -o OUTPUT, --output OUTPUT
+                        Output filename (this overwrites the output filename
+                        in the configuration file
+  -d DIAGNOSTICS, --diagnostics DIAGNOSTICS
+                        Flag to get diagnostic messages
+  -a ADD_TO_RIMS, --add_to_rims ADD_TO_RIMS
+                        Flag to add clumping galaxies around rim galaxies
+  -e EXTENDED, --extended EXTENDED
+                        Flag to write the extended output for the fits file
+  -p PICKLE, --pickle PICKLE
+                        Flag to write the extended pickle file
+  -u STYLE, --style STYLE
+                        Flag to use the provided plotting style
+```
+`--config` argument is required for the configuration to be used.
+Other arguments are optional and the explanation is provided with `--help`.
 
 ### Using modules
 
