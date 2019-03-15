@@ -4,11 +4,11 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/master)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/master)
 
 <!-- toc -->
-1. [Requirements](#requirements)
-2. [Introduction](#introduction)
-3. [Usage](#usage)
-3.1 [Using Executables](#using-executables)
-3.2 [Using Modules](#using-modules)
+* [Requirements](#requirements)
+* [Introduction](#introduction)
+* [Usage](#usage)
+  * [Using Executables](#using-executables)
+  * [Using Modules](#using-modules)
 <!-- tocstop -->
 
 ## Requirements
