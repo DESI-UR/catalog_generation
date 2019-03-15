@@ -4,11 +4,11 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/master)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/master)
 
 <!-- toc -->
-- [Requirements](#requirements)
-- [Introduction](#introduction)
-- [Usage](#usage)
--- [Using Executables](#using executables)
--- [Using Modules](#using modules)
+1. [Requirements](#requirements)
+2. [Introduction](#introduction)
+3. [Usage](#usage)
+3.1 [Using Executables](#using-executables)
+3.2 [Using Modules](#using-modules)
 <!-- tocstop -->
 
 ## Requirements
@@ -39,7 +39,7 @@ where r is the distance of the center of the cluster, A is a normalization param
 
 ### Using executables
 
-There are two executables provided within the package. These executables are explain in (#using modules). 
+There are two executables provided within the package. These executables are explain in (#using-modules). 
 
 ### Using modules
 
