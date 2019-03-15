@@ -42,7 +42,7 @@ The mock and random catalog generation requires two distributions: z distributio
 We start by randomly generating N<sub>center</sub> new galaxies according to the product of R<sub>ang</sub>(&theta;, &phi;) and P(r). These galaxies form centers of BAO ”bubbles”. Then, for each BAO center we add N<sub>rim</sub> galaxies located at a distance r<sub>BAO</sub> from the center and uniformly distributed over solid angle around the BAO center. Added galaxies can be discarded to correct for the acceptance in r and angles (&theta;, &phi;).
 
 Then, N<sub>flat</sub> random galaxies are generated according to the product of R<sub>ang</sub>(&theta;, &phi;) and P(r). After this, some ”clumping” is introduced around NR<sub>clump</sub> galaxies drawn randomly from the newly-created mock catalog to mimic galaxy clusters, with BAO centers having a different number of clumping partners because of the potential access of dark matter around the BAO centers. Clumping follows the following distribution:
-f(r) = Ax(r<sub>0</sub>/r)&gamma;
+f(r) = Ax(r<sub>0</sub>/r)<sup>&gamma;</sup>
 where r is the distance of the center of the cluster, A is a normalization parameter and r<sub>0</sub> and &gamma; are input parameters.
 
 ## Usage
