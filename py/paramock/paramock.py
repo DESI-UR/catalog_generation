@@ -165,6 +165,11 @@ class GeneralTools():
             self.r_0        = r_0.value/self.h0
         else:
             self.r_0        = r_0.to("Mpc").value
+        mu                  = self.read_config_line(self.config.get('Gen Params','mu'))
+        if mu.unit == u.dimensionless_unscaled:
+            self.mu         = (mu.value/self.h0)/self.r_0
+        else:
+            self.mu         = (mu.to("Mpc").value)/self.r_0
         self.n_rand         = int(self.config.get('Gen Params','n_rand'))
         self.n_center       = int(self.config.get('Gen Params','n_center'))
         self.n_rim          = int(self.config.get('Gen Params','n_rim'))
@@ -814,7 +819,7 @@ class GeneralTools():
             else:
                 n_clump_to_inject = np.random.poisson(self.n_clump_center)
             # we move the calculated distances by 1Mpc to have a realistic clustering
-            clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
+            clump_r          = ( self.r_0 * ( np.random.pareto( self.gamma-1, n_clump_to_inject ) + self.mu ) )
             if self.diagnostics or diagnostics:
                 center_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                 self.center_clump_r_dist += center_clump_r_dist
@@ -868,7 +873,7 @@ class GeneralTools():
                 else:
                     n_clump_to_inject = np.random.poisson(self.n_clump_center)
                 # we move the calculated distances by 1Mpc to have a realistic clustering
-                clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
+                clump_r          = ( self.r_0 * ( np.random.pareto( self.gamma-1, n_clump_to_inject ) + self.mu ) )
                 if self.diagnostics or diagnostics:
                     rim_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                     self.rim_clump_r_dist += rim_clump_r_dist
@@ -930,7 +935,7 @@ class GeneralTools():
             else:
                 n_clump_to_inject = np.random.poisson(self.n_clump)
             # we move the calculated distances by 1Mpc to have a realistic clustering
-            clump_r          = (self.r_0 * (np.random.pareto(self.gamma-1, n_clump_to_inject))) + 1.0
+            clump_r          = ( self.r_0 * ( np.random.pareto( self.gamma-1, n_clump_to_inject ) + self.mu ) )
             if self.diagnostics or diagnostics:
                 flat_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                 self.flat_clump_r_dist += flat_clump_r_dist
@@ -1000,6 +1005,7 @@ class GeneralTools():
         config['sig_r_BAO']   = self.sigma_r_BAO
         config['gamma']       = self.gamma
         config['r_0']         = self.r_0
+        config['mu']          = self.mu
         config['n_rand']      = self.n_rand
         config['n_center']    = self.n_center
         config['n_rim']       = self.n_rim
