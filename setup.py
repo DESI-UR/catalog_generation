@@ -59,7 +59,7 @@ setup_keywords['provides'] = [setup_keywords['name']]
 setup_keywords['install_requires'] = ['healpy>=1.11.0', 'numpy>=1.13.1', 'configparser>=3.5', \
                                       'astropy>=1.2.1', 'scipy>=0.19.1', 'matplotlib>=2.0.0']
 setup_keywords['zip_safe'] = False
-setup_keywords['use_2to3'] = True
+setup_keywords['use_2to3'] = False
 setup_keywords['packages'] = find_packages('py')
 setup_keywords['package_dir'] = {'':'py'}
 setup_keywords['cmdclass'] = {'install': Install,}
