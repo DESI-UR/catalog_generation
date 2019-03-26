@@ -160,16 +160,11 @@ class GeneralTools():
 
         # Clumping parameters
         self.gamma          = float(self.config.get('Gen Params','gamma'))
-        r_0                 = self.read_config_line(self.config.get('Gen Params','r_0'))
+        r_scale             = self.read_config_line(self.config.get('Gen Params','r_scale'))
         if r_0.unit == u.dimensionless_unscaled:
-            self.r_0        = r_0.value/self.h0
+            self.r_scale    = r_scale.value/self.h0
         else:
-            self.r_0        = r_0.to("Mpc").value
-        mu                  = self.read_config_line(self.config.get('Gen Params','mu'))
-        if mu.unit == u.dimensionless_unscaled:
-            self.mu         = (mu.value/self.h0)/self.r_0
-        else:
-            self.mu         = (mu.to("Mpc").value)/self.r_0
+            self.r_scale    = r_scale.to("Mpc").value
         self.n_rand         = int(self.config.get('Gen Params','n_rand'))
         self.n_center       = int(self.config.get('Gen Params','n_center'))
         self.n_rim          = int(self.config.get('Gen Params','n_rim'))
@@ -190,9 +185,11 @@ class GeneralTools():
         try:
             self.a          = float(self.config.get('Gen Params','a'))
             self.b          = float(self.config.get('Gen Params','b'))
+            self.c          = float(self.config.get('Gen Params','c'))
         except Exception as e:
             self.a          = 1.
             self.b          = 1.
+            self.c          = 1.
         self.n_clump        = int(self.config.get('Gen Params','n_clump'))
         self.n_clump_center = int(self.config.get('Gen Params','n_centerclump'))
         try:
@@ -205,7 +202,7 @@ class GeneralTools():
         self.r_max      = self.cosmo.comoving_distance(self.z_max).value
         self.r_min      = self.cosmo.comoving_distance(self.z_min).value
         
-        self.anisotropy_scale = np.array([self.a, self.b, self.a])
+        self.anisotropy_scale = np.array([self.a, self.b, self.c])
 
         if self.diagnostics or diagnostics:
             print("Configuration is a follows:\n"\
@@ -337,10 +334,10 @@ class GeneralTools():
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             fit = plt.figure()
-            plt.hist(flat_r, histtype='step')
+            plt.hist(flat_r, histtype='step', bins=int(np.sqrt(len(flat_r))))
             plt.xlabel("r [Mpc]")
             plt.title("Flat r distribution")
-            plt.savefig("diagnostics/r_distribution.pdf")
+            plt.savefig("diagnostics/flat_r_distribution.pdf")
             plt.close()
         return flat_r
 
@@ -381,8 +378,8 @@ class GeneralTools():
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             fig = plt.figure()
-            plt.hist(rlist, histtype='step')
-            plt.xlabel("r [Mpc]")
+            plt.hist(rlist*self.h0, histtype='step', bins=int(np.sqrt(len(rlist))))
+            plt.xlabel("r [$h^{-1}$Mpc]")
             plt.savefig("diagnostics/r_distribution.pdf")
             plt.close()
         return rlist
@@ -455,7 +452,7 @@ class GeneralTools():
                                         range=(self.z_min, self.z_max))
         else:
             template_z   = template_z[np.logical_and(template_z<=self.z_max, template_z>=self.z_min)]
-            num_bins     = int(np.sqrt(len(template_z)))
+            num_bins     = self.calculate_n_bins(len(template_z)) 
             n, z_edges   = np.histogram(template_z, bins=num_bins, normed=True, range=(self.z_min, self.z_max))
         n            = n.astype(float)
         z_med        = (z_edges[:-1] + z_edges[1:])/2.
@@ -463,7 +460,8 @@ class GeneralTools():
         interpolator = interp1d(z_med, n, bounds_error=False, fill_value=-1.)
         
         num_z_test           = len(z_test)
-        n_test, z_test_edges = np.histogram(z_test, bins=int(np.sqrt(num_z_test)),
+        num_z_test_bins      = self.calculate_n_bins(num_z_test) 
+        n_test, z_test_edges = np.histogram(z_test, bins=num_z_test_bins,
                                             range=(self.z_min, self.z_max), normed=True)
         n_test               = n_test.astype(float)
         z_test_med           = (z_test_edges[:-1] + z_test_edges[1:])/2.
@@ -473,20 +471,30 @@ class GeneralTools():
         p2  = interpolator_test(z_test)
         acc = [np.random.uniform(0, p) for p in p2]
 
-        passed_acceptance = np.logical_and(np.logical_and(p1>acc, z_test<=self.z_max), z_test>=self.z_min)
-
+        passed_acceptance   = np.logical_and(np.logical_and(p1>acc, z_test<=self.z_max), z_test>=self.z_min)
+        num_z_accepted_bins = self.calculate_n_bins(len(z_test[passed_acceptance])/2.)
+        
         if self.diagnostics or diagnostics:
             # plot the distributions before and after the acceptance test
             # along with the template distribution
             self.check_diagnostics_directory()
+            fig = plt.figure()
+            n1, b1, _ = plt.hist(template_z, bins=len(template_w), density=True, weights=template_w, range=(self.z_min, self.z_max),
+                                 label="Template distribution", histtype='step', linewidth=2)
+            b1_mid    = (b1[1:] + b1[:-1])*.5
+            n2, b2, _ = plt.hist(z_test, bins=num_z_test_bins, density=True, range=(self.z_min, self.z_max),
+                                 label="Distribution before acceptance", histtype='step', linewidth=2)
+            b2_mid    = (b2[1:] + b2[:-1])*.5
+            n3, b3, _ = plt.hist(z_test[passed_acceptance], bins=num_z_accepted_bins, density=True, range=(self.z_min, self.z_max),
+                                 label="Distribution after acceptance", histtype='step', linewidth=2)
+            b3_mid    = (b3[1:] + b3[:-1])*.5
+            plt.close()
             fig = plt.figure(figsize=(6,6))
-            plt.hist(template_z, bins=num_bins, density=True, weights=template_w, range=(self.z_min, self.z_max),
-                     label="Template distribution", alpha=.3, histtype='step')
-            plt.hist(z_test, bins=num_bins, density=True, range=(self.z_min, self.z_max),
-                     label="Distribution before acceptance", alpha=.3, histtype='step')
-            plt.hist(z_test[passed_acceptance], bins=num_bins, density=True, range=(self.z_min, self.z_max),
-                     label="Distribution after acceptance", alpha=.3, histtype='step')
+            plt.plot(b1_mid, n1, label="Template distribution")
+            plt.plot(b2_mid, n2, label="Distribution before acceptance")
+            plt.plot(b3_mid, n3, label="Distribution after acceptance")
             plt.xlabel("Redshift [z]")
+            plt.ylim(0, 1.25*max(max(n1), max(n2), max(n3)))
             plt.legend()
             plt.savefig("diagnostics/acceptance_stats.pdf")
             plt.close()
@@ -735,9 +743,24 @@ class GeneralTools():
                       color='black', label=r'$\sigma_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.sigma_r_BAO*self.h0))
             plt.xlabel("Distance [$h^{-1}$Mpc]")
             plt.title('Distribution of the distance of rim galaxies \n with respect to their centers')
-            plt.legend()
+            plt.legend(loc=2)
             plt.grid(True)
+            plt.ylim(-0.002, 1.5*max(normed_rim_BAO_r_dist))
             plt.savefig("diagnostics/BAO_distribution.pdf")
+            plt.close()
+            fig = plt.figure(figsize=(6,6))
+            plt.plot(bin_centers, normed_rim_BAO_r_dist, label='Distribution in the mock')
+            plt.plot([self.r_BAO*self.h0, self.r_BAO*self.h0], [0, normed_rim_BAO_r_dist.max()], 
+                     label=r'r$_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.r_BAO*self.h0))
+            plt.plot([(self.r_BAO-1.2*self.sigma_r_BAO)*self.h0, (self.r_BAO+1.2*self.sigma_r_BAO)*self.h0],
+                     [normed_rim_BAO_r_dist.max()/np.e, normed_rim_BAO_r_dist.max()/np.e], 
+                      label=r'$\sigma_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.sigma_r_BAO*self.h0))
+            plt.xlabel("Distance [$h^{-1}$Mpc]")
+            plt.title('Distribution of the distance of rim galaxies \n with respect to their centers')
+            plt.legend(loc=2)
+            plt.grid(True)
+            plt.ylim(-0.002, 1.5*max(normed_rim_BAO_r_dist))
+            plt.savefig("diagnostics/BAO_distribution_colored.pdf")
             plt.close()
         return
 
@@ -819,7 +842,7 @@ class GeneralTools():
             else:
                 n_clump_to_inject = np.random.poisson(self.n_clump_center)
             # we move the calculated distances by 1Mpc to have a realistic clustering
-            clump_r          = ( self.r_0 * ( np.random.pareto( self.gamma-1, n_clump_to_inject ) + self.mu ) )
+            clump_r          = ( self.r_scale ** self.gamma ) * ( np.random.pareto( self.gamma, n_clump_to_inject ) )
             if self.diagnostics or diagnostics:
                 center_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                 self.center_clump_r_dist += center_clump_r_dist
@@ -872,8 +895,8 @@ class GeneralTools():
                     n_clump_to_inject = self.n_clump_center
                 else:
                     n_clump_to_inject = np.random.poisson(self.n_clump_center)
-                # we move the calculated distances by 1Mpc to have a realistic clustering
-                clump_r          = ( self.r_0 * ( np.random.pareto( self.gamma-1, n_clump_to_inject ) + self.mu ) )
+                # we move the calculated distances by mu to have a realistic clustering
+                clump_r          = ( self.r_scake ** self.gamma ) * ( np.random.pareto( self.gamma, n_clump_to_inject ) )
                 if self.diagnostics or diagnostics:
                     rim_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                     self.rim_clump_r_dist += rim_clump_r_dist
@@ -935,7 +958,7 @@ class GeneralTools():
             else:
                 n_clump_to_inject = np.random.poisson(self.n_clump)
             # we move the calculated distances by 1Mpc to have a realistic clustering
-            clump_r          = ( self.r_0 * ( np.random.pareto( self.gamma-1, n_clump_to_inject ) + self.mu ) )
+            clump_r          = ( self.r_scale ** self.gamma )* ( np.random.pareto( self.gamma-1, n_clump_to_inject ) )
             if self.diagnostics or diagnostics:
                 flat_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                 self.flat_clump_r_dist += flat_clump_r_dist
@@ -985,6 +1008,17 @@ class GeneralTools():
             plt.grid(True)
             plt.savefig("diagnostics/clump_r_distributions.pdf")
             plt.close()
+            fig = plt.figure(figsize=(6,6))
+            plt.plot(mid_values, self.flat_clump_r_dist/np.sum(self.flat_clump_r_dist), label="flat seeded clumps")
+            plt.plot(mid_values, self.center_clump_r_dist/np.sum(self.center_clump_r_dist), label="center seeded clumps")
+            plt.plot(mid_values, self.rim_clump_r_dist/np.sum(self.rim_clump_r_dist), label="rim seeded clumps")
+            plt.yscale("log")
+            plt.title('Distribution of the distances of clumping galaxies \n with respect to their seeds')
+            plt.xlabel("Distance [$h^{-1}$Mpc]")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig("diagnostics/clump_r_distributions_colored.pdf")
+            plt.close()
             average_flat_clump_r   = np.average(mid_values, weights=self.flat_clump_r_dist/np.sum(self.flat_clump_r_dist))
             average_center_clump_r = np.average(mid_values, weights=self.center_clump_r_dist/np.sum(self.center_clump_r_dist))
             average_rim_clump_r    = np.average(mid_values, weights=self.rim_clump_r_dist/np.sum(self.rim_clump_r_dist))
@@ -1004,8 +1038,7 @@ class GeneralTools():
         config['r_BAO']       = self.r_BAO
         config['sig_r_BAO']   = self.sigma_r_BAO
         config['gamma']       = self.gamma
-        config['r_0']         = self.r_0
-        config['mu']          = self.mu
+        config['r_scale']     = self.r_scale
         config['n_rand']      = self.n_rand
         config['n_center']    = self.n_center
         config['n_rim']       = self.n_rim
@@ -1018,6 +1051,15 @@ class GeneralTools():
         save_items = {'catalog': self.catalog, 'config': config}
         pickle.dump(save_items, open(filename, "wb"), protocol=-1)
 
+    def calculate_n_bins(self, nEvents, rule="Rice"):
+        if rule == "Sturge":
+            return int(np.ceil(1+3.322*np.log10(nEvents)))
+        elif rule == "Rice":
+            return int(np.ceil(np.power(nEvents, 1./3.)*2))
+        else:
+            print("Problem with the choice of binning method. Falling back to default")
+            return int(np.ceil(np.power(nEvents, 1./3.)*2))
+        
     def write_to_fits(self, filename=None, is_random=False, save_extended=False):
         if filename is None:
             if not is_random:
@@ -1048,7 +1090,7 @@ class GeneralTools():
         header['r_BAO']       = self.r_BAO
         header['sig_r_BAO']   = self.sigma_r_BAO
         header['gamma']       = self.gamma
-        header['r_0']         = self.r_0
+        header['r_scale']     = self.r_scale
         header['n_rand']      = self.n_rand
         header['n_center']    = self.n_center
         header['n_rim']       = self.n_rim
