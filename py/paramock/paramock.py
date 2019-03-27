@@ -20,8 +20,8 @@ from scipy.interpolate import interp1d
 
 #from paramock import galaxy
 #from paramock import catalog
-from galaxy import galaxy
-from catalog import catalog
+from paramock.galaxy import galaxy
+from paramock.catalog import catalog
 
 import time
 
@@ -56,7 +56,7 @@ class GeneralTools():
         self.rim_clump_r_dist, _    = np.histogram([], bins=100, range=(0, 100))
         self.rim_BAO_r_dist, _      = np.histogram([], bins=100, range=(100, 200))
         if use_style:
-            import style
+            import paramock.style
         
     def setDiagnostics(self, diagnostics):
         """
@@ -161,7 +161,7 @@ class GeneralTools():
         # Clumping parameters
         self.gamma          = float(self.config.get('Gen Params','gamma'))
         r_scale             = self.read_config_line(self.config.get('Gen Params','r_scale'))
-        if r_0.unit == u.dimensionless_unscaled:
+        if r_scale.unit == u.dimensionless_unscaled:
             self.r_scale    = r_scale.value/self.h0
         else:
             self.r_scale    = r_scale.to("Mpc").value
@@ -896,7 +896,7 @@ class GeneralTools():
                 else:
                     n_clump_to_inject = np.random.poisson(self.n_clump_center)
                 # we move the calculated distances by mu to have a realistic clustering
-                clump_r          = ( self.r_scake ** self.gamma ) * ( np.random.pareto( self.gamma, n_clump_to_inject ) )
+                clump_r          = ( self.r_scale ** self.gamma ) * ( np.random.pareto( self.gamma, n_clump_to_inject ) )
                 if self.diagnostics or diagnostics:
                     rim_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                     self.rim_clump_r_dist += rim_clump_r_dist
@@ -958,7 +958,7 @@ class GeneralTools():
             else:
                 n_clump_to_inject = np.random.poisson(self.n_clump)
             # we move the calculated distances by 1Mpc to have a realistic clustering
-            clump_r          = ( self.r_scale ** self.gamma )* ( np.random.pareto( self.gamma-1, n_clump_to_inject ) )
+            clump_r          = ( self.r_scale ** self.gamma )* ( np.random.pareto( self.gamma, n_clump_to_inject ) )
             if self.diagnostics or diagnostics:
                 flat_clump_r_dist, _    = np.histogram(clump_r, bins=100, range=(0, 100))
                 self.flat_clump_r_dist += flat_clump_r_dist
