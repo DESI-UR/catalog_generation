@@ -21,7 +21,10 @@ from py.paramock import versioning as ver
 class Install(InstallCommand):
     """ Customized setuptools install command which uses pip."""
     def run(self, *args, **kwargs):
-        from pip._internal import main
+        try:
+            from pip._internal import main
+        except:
+            from pip import main
         main(['install', '.'])
         InstallCommand.run(self, *args, **kwargs)
 
