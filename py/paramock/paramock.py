@@ -378,9 +378,12 @@ class GeneralTools():
         if diagnostics or self.diagnostics:
             self.check_diagnostics_directory()
             fig = plt.figure()
-            plt.hist(rlist*self.h0, histtype='step', bins=int(np.sqrt(len(rlist))))
-            plt.xlabel("r [$h^{-1}$Mpc]")
-            plt.savefig("diagnostics/r_distribution.pdf")
+            try:
+                plt.hist(rlist*self.h0, histtype='step', bins=int(np.sqrt(len(rlist))))
+                plt.xlabel("r [$h^{-1}$Mpc]")
+                plt.savefig("diagnostics/r_distribution.pdf")
+            except ValueError:
+                pass
             plt.close()
         return rlist
 
@@ -472,7 +475,7 @@ class GeneralTools():
         acc = [np.random.uniform(0, p) for p in p2]
 
         passed_acceptance   = np.logical_and(np.logical_and(p1>acc, z_test<=self.z_max), z_test>=self.z_min)
-        num_z_accepted_bins = self.calculate_n_bins(len(z_test[passed_acceptance])/2.)
+        num_z_accepted_bins = self.calculate_n_bins(len(z_test[passed_acceptance]))
         
         if self.diagnostics or diagnostics:
             # plot the distributions before and after the acceptance test
@@ -735,32 +738,38 @@ class GeneralTools():
             bin_centers = (bins[1:]+bins[:-1])*.5*self.h0
             normed_rim_BAO_r_dist = self.rim_BAO_r_dist/np.sum(self.rim_BAO_r_dist)
             fig = plt.figure(figsize=(6,6))
-            plt.plot(bin_centers, normed_rim_BAO_r_dist, label='Distribution in the mock', color='black')
-            plt.plot([self.r_BAO*self.h0, self.r_BAO*self.h0], [0, normed_rim_BAO_r_dist.max()], '--', color='black',
-                     label=r'r$_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.r_BAO*self.h0))
-            plt.plot([(self.r_BAO-1.2*self.sigma_r_BAO)*self.h0, (self.r_BAO+1.2*self.sigma_r_BAO)*self.h0],
-                     [normed_rim_BAO_r_dist.max()/np.e, normed_rim_BAO_r_dist.max()/np.e], ':',
-                      color='black', label=r'$\sigma_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.sigma_r_BAO*self.h0))
-            plt.xlabel("Distance [$h^{-1}$Mpc]")
-            plt.title('Distribution of the distance of rim galaxies \n with respect to their centers')
-            plt.legend(loc=2)
-            plt.grid(True)
-            plt.ylim(-0.002, 1.5*max(normed_rim_BAO_r_dist))
-            plt.savefig("diagnostics/BAO_distribution.pdf")
+            try:
+                plt.plot(bin_centers, normed_rim_BAO_r_dist, label='Distribution in the mock', color='black')
+                plt.plot([self.r_BAO*self.h0, self.r_BAO*self.h0], [0, normed_rim_BAO_r_dist.max()], '--', color='black',
+                         label=r'r$_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.r_BAO*self.h0))
+                plt.plot([(self.r_BAO-1.2*self.sigma_r_BAO)*self.h0, (self.r_BAO+1.2*self.sigma_r_BAO)*self.h0],
+                         [normed_rim_BAO_r_dist.max()/np.e, normed_rim_BAO_r_dist.max()/np.e], ':',
+                         color='black', label=r'$\sigma_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.sigma_r_BAO*self.h0))
+                plt.xlabel("Distance [$h^{-1}$Mpc]")
+                plt.title('Distribution of the distance of rim galaxies \n with respect to their centers')
+                plt.legend(loc=2)
+                plt.grid(True)
+                plt.ylim(-0.002, 1.5*max(normed_rim_BAO_r_dist))
+                plt.savefig("diagnostics/BAO_distribution.pdf")
+            except ValueError:
+                pass
             plt.close()
             fig = plt.figure(figsize=(6,6))
-            plt.plot(bin_centers, normed_rim_BAO_r_dist, label='Distribution in the mock')
-            plt.plot([self.r_BAO*self.h0, self.r_BAO*self.h0], [0, normed_rim_BAO_r_dist.max()], 
-                     label=r'r$_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.r_BAO*self.h0))
-            plt.plot([(self.r_BAO-1.2*self.sigma_r_BAO)*self.h0, (self.r_BAO+1.2*self.sigma_r_BAO)*self.h0],
-                     [normed_rim_BAO_r_dist.max()/np.e, normed_rim_BAO_r_dist.max()/np.e], 
-                      label=r'$\sigma_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.sigma_r_BAO*self.h0))
-            plt.xlabel("Distance [$h^{-1}$Mpc]")
-            plt.title('Distribution of the distance of rim galaxies \n with respect to their centers')
-            plt.legend(loc=2)
-            plt.grid(True)
-            plt.ylim(-0.002, 1.5*max(normed_rim_BAO_r_dist))
-            plt.savefig("diagnostics/BAO_distribution_colored.pdf")
+            try:
+                plt.plot(bin_centers, normed_rim_BAO_r_dist, label='Distribution in the mock')
+                plt.plot([self.r_BAO*self.h0, self.r_BAO*self.h0], [0, normed_rim_BAO_r_dist.max()], 
+                         label=r'r$_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.r_BAO*self.h0))
+                plt.plot([(self.r_BAO-1.2*self.sigma_r_BAO)*self.h0, (self.r_BAO+1.2*self.sigma_r_BAO)*self.h0],
+                         [normed_rim_BAO_r_dist.max()/np.e, normed_rim_BAO_r_dist.max()/np.e], 
+                         label=r'$\sigma_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.sigma_r_BAO*self.h0))
+                plt.xlabel("Distance [$h^{-1}$Mpc]")
+                plt.title('Distribution of the distance of rim galaxies \n with respect to their centers')
+                plt.legend(loc=2)
+                plt.grid(True)
+                plt.ylim(-0.002, 1.5*max(normed_rim_BAO_r_dist))
+                plt.savefig("diagnostics/BAO_distribution_colored.pdf")
+            except ValueError:
+                pass
             plt.close()
         return
 
@@ -1051,13 +1060,13 @@ class GeneralTools():
         save_items = {'catalog': self.catalog, 'config': config}
         pickle.dump(save_items, open(filename, "wb"), protocol=-1)
 
-    def calculate_n_bins(self, nEvents, rule="Rice"):
+    def calculate_n_bins(self, nEvents, rule="Sturge"):
         if rule == "Sturge":
-            return int(np.ceil(1+3.322*np.log10(nEvents)))
+            return int(np.ceil(1+3.322*np.log10(nEvents))*5)
         if rule == "Rice":
             return int(np.ceil(np.power(nEvents, 1./3.)*2))
         print("Problem with the choice of binning method. Falling back to default")
-        return int(np.ceil(np.power(nEvents, 1./3.)*2))
+        return int(np.ceil(1+3.322*np.log10(nEvents))*5)
         
     def write_to_fits(self, filename=None, is_random=False, save_extended=False):
         if filename is None:

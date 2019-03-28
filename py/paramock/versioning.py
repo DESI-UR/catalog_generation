@@ -13,6 +13,7 @@ def get_version(out_type=None):
         version_info = re.match("__version__.*=.*([0-9]+)\.([0-9]+)\.([0-9]+).*", line)
         major, minor, patch = version_info.groups()
         found_version = True
+        continue
     if found_version is False:
         raise RuntimeError("Version information could not be accessed.")
     if out_type == 'string':
