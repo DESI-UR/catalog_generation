@@ -26,6 +26,15 @@ The version of the python packages listed below are the tested version. Any rece
 Generating the mock requires a completeness map and a redshift distribution. An example completeness map is provided at `examples/data/example_coverage.npz`. As for the redshift distribution, user can use a data challenge file which has the information for individual galaxies or use a fits file similar to the one provided at `examples/data/example_zcat.fits`. 
 
 ## Installation
+In order to avoid any possible conficts with other packages, it is advised to create a clean `conda` environment:
+```
+conda create -n paramockEnv python=3 numpy>=1.13
+```
+It should be noted that numpy is installed while creating the conda environment. This is due to an unexpected problem with `easy_install` not being able to install `numpy` properly.
+
+Then, user needs to load the new conda environment as follows:
+`source activate paramockEnv`
+
 The installation procedure is as follows:
 ```
 https://github.com/DESI-UR/catalog_generation.git
