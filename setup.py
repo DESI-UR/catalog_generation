@@ -23,7 +23,7 @@ class Install(InstallCommand):
     def run(self, *args, **kwargs):
         try:
             from pip._internal import main
-        except:
+        except ImportError:
             from pip import main
         main(['install', '.'])
         InstallCommand.run(self, *args, **kwargs)
