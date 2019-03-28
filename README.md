@@ -29,7 +29,7 @@ Generating the mock requires a completeness map and a redshift distribution. An 
 In order to avoid any possible conficts with other packages, it is advised to create a clean `conda` environment. `conda` installation instructions can be found at this [link](https://docs.conda.io/projects/conda/en/latest/user-guide/install/). The new environment can be created as follows:
 
 ```
-conda create -n paramockEnv python=3 numpy>=1.13
+conda create -n paramockEnv python=3 numpy
 ```
 
 It should be noted that numpy is installed while creating the conda environment. This is due to an unexpected problem with `easy_install` not being able to install `numpy` properly.
@@ -38,9 +38,9 @@ Then, user needs to load the new conda environment as follows:
 
 ```source activate paramockEnv```
 
-The installation procedure is as follows:
+To install ParaMock:
 ```
-https://github.com/DESI-UR/catalog_generation.git
+git clone https://github.com/DESI-UR/catalog_generation.git
 cd catalog_generation
 python setup.py install
 ```
