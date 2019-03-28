@@ -35,6 +35,7 @@ conda create -n paramockEnv python=3 numpy>=1.13
 It should be noted that numpy is installed while creating the conda environment. This is due to an unexpected problem with `easy_install` not being able to install `numpy` properly.
 
 Then, user needs to load the new conda environment as follows:
+
 ```source activate paramockEnv```
 
 The installation procedure is as follows:
