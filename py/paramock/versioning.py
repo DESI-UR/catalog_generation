@@ -23,7 +23,7 @@ def update_version():
     major, minor, patch = get_version()
     print(type(major))
     with open(file_path, "w+") as fid:
-        fid.write("__version__ = '{}.{}.{}'".format(major, minor, patch+1))
+        fid.write("__version__ = '{}.{}.{}'\n".format(major, minor, patch+1))
 
 if __name__=="__main__":
     update_version()
