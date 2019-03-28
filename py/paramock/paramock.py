@@ -1054,11 +1054,10 @@ class GeneralTools():
     def calculate_n_bins(self, nEvents, rule="Rice"):
         if rule == "Sturge":
             return int(np.ceil(1+3.322*np.log10(nEvents)))
-        elif rule == "Rice":
+        if rule == "Rice":
             return int(np.ceil(np.power(nEvents, 1./3.)*2))
-        else:
-            print("Problem with the choice of binning method. Falling back to default")
-            return int(np.ceil(np.power(nEvents, 1./3.)*2))
+        print("Problem with the choice of binning method. Falling back to default")
+        return int(np.ceil(np.power(nEvents, 1./3.)*2))
         
     def write_to_fits(self, filename=None, is_random=False, save_extended=False):
         if filename is None:
