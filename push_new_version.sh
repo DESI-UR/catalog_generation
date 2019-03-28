@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python_version=`python -c "import sys; print(\"{}.{}\".format(sys.version_info[0], sys.version_info[1]))"`
+python_version=$(python -c "import sys; print(\"{}.{}\".format(sys.version_info[0], sys.version_info[1]))")
 
 if [ $python_version == "3.6" ]
 then 
