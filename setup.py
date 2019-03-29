@@ -21,7 +21,10 @@ from py.paramock import versioning as ver
 class Install(InstallCommand):
     """ Customized setuptools install command which uses pip."""
     def run(self, *args, **kwargs):
-        from pip._internal import main
+        try:
+            from pip._internal import main
+        except ImportError:
+            from pip import main
         main(['install', '.'])
         InstallCommand.run(self, *args, **kwargs)
 
@@ -45,7 +48,6 @@ print("Version is set to {}".format(ver.get_version(out_type='string')))
 #
 # END OF SETTINGS THAT NEED TO BE CHANGED.
 #
-#setup_keywords['version'] = get_version(setup_keywords['name'])
 
 # Set other keywords for the setup function.  These are automated, & should
 # be left alone unless you are an expert.
@@ -57,28 +59,19 @@ if os.path.isdir('bin'):
         if not os.path.basename(fname).endswith('.rst')]
 
 setup_keywords['provides'] = [setup_keywords['name']]
-setup_keywords['requires'] = ['Python (>3.5)', 'healpy (>=1.11.0)', 'numpy (>=1.13.1)', 'configparser (>=3.5)', \
-                              'astropy (>=1.2.1)', 'scipy (>=0.19.1)', 'matplotlib (>=2.0.0)']
+setup_keywords['setup_requires'] = ['numpy>=1.13.1']
 setup_keywords['install_requires'] = ['healpy>=1.11.0', 'numpy>=1.13.1', 'configparser>=3.5', \
                                       'astropy>=1.2.1', 'scipy>=0.19.1', 'matplotlib>=2.0.0']
 setup_keywords['zip_safe'] = False
-setup_keywords['use_2to3'] = True
+setup_keywords['use_2to3'] = False
 setup_keywords['packages'] = find_packages('py')
 setup_keywords['package_dir'] = {'':'py'}
-setup_keywords['cmdclass'] = {'install': Install,}
+#setup_keywords['cmdclass'] = {'install': Install,}
 
-#setup_keywords['cmdclass'] = {'version': DesiVersion, 'test': DesiTest, 'sdist': DistutilsSdist}
-#setup_keywords['test_suite']='{name}.test.test_suite'.format(**setup_keywords)
-
-#
-# Autogenerate command-line scripts.
-#
-# setup_keywords['entry_points'] = {'console_scripts':['desiInstall = desiutil.install.main:main']}
-#
 # Add internal data directories.
 #
 setup_keywords['package_data'] = {'ParaMock': ['data/*',]}
-#
+
 # Run setup command.
 #
 setup(**setup_keywords)
