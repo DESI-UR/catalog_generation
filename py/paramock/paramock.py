@@ -475,14 +475,14 @@ class GeneralTools():
         acc = [np.random.uniform(0, p) for p in p2]
 
         passed_acceptance   = np.logical_and(np.logical_and(p1>acc, z_test<=self.z_max), z_test>=self.z_min)
-        num_z_accepted_bins = self.calculate_n_bins(len(z_test[passed_acceptance]))
+        num_z_accepted_bins = 50#self.calculate_n_bins(len(z_test[passed_acceptance]))
         
         if self.diagnostics or diagnostics:
             # plot the distributions before and after the acceptance test
             # along with the template distribution
             self.check_diagnostics_directory()
             fig = plt.figure()
-            n1, b1, _ = plt.hist(template_z, bins=len(template_w), density=True, weights=template_w, range=(self.z_min, self.z_max),
+            n1, b1, _ = plt.hist(template_z, bins=40, density=True, weights=template_w, range=(self.z_min, self.z_max),
                                  label="Template distribution", histtype='step', linewidth=2)
             b1_mid    = (b1[1:] + b1[:-1])*.5
             n2, b2, _ = plt.hist(z_test, bins=num_z_test_bins, density=True, range=(self.z_min, self.z_max),
@@ -493,13 +493,24 @@ class GeneralTools():
             b3_mid    = (b3[1:] + b3[:-1])*.5
             plt.close()
             fig = plt.figure(figsize=(6,6))
+            plt.plot(b1_mid, n1, label="Template distribution", linestyle='-', color='black')
+            plt.plot(b2_mid, n2, label="Distribution before acceptance", linestyle='--', color='black')
+            plt.plot(b3_mid, n3, label="Distribution after acceptance", linestyle='-.', color='black')
+            plt.xlabel("Redshift [z]")
+            plt.ylim(1e-1, 10*max(max(n1), max(n2), max(n3)))
+            plt.legend()
+            plt.yscale("log")
+            plt.savefig("diagnostics/acceptance_stats.pdf")
+            plt.close()
+            fig = plt.figure(figsize=(6,6))
             plt.plot(b1_mid, n1, label="Template distribution")
             plt.plot(b2_mid, n2, label="Distribution before acceptance")
             plt.plot(b3_mid, n3, label="Distribution after acceptance")
             plt.xlabel("Redshift [z]")
-            plt.ylim(0, 1.25*max(max(n1), max(n2), max(n3)))
+            plt.ylim(1e-1, 10*max(max(n1), max(n2), max(n3)))
             plt.legend()
-            plt.savefig("diagnostics/acceptance_stats.pdf")
+            plt.yscale("log")
+            plt.savefig("diagnostics/acceptance_stats_colored.pdf")
             plt.close()
             
         if self.acceptance:
@@ -743,7 +754,7 @@ class GeneralTools():
                 plt.plot([self.r_BAO*self.h0, self.r_BAO*self.h0], [0, normed_rim_BAO_r_dist.max()], '--', color='black',
                          label=r'r$_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.r_BAO*self.h0))
                 plt.plot([(self.r_BAO-1.2*self.sigma_r_BAO)*self.h0, (self.r_BAO+1.2*self.sigma_r_BAO)*self.h0],
-                         [normed_rim_BAO_r_dist.max()/np.e, normed_rim_BAO_r_dist.max()/np.e], ':',
+                         [normed_rim_BAO_r_dist.max()/np.e, normed_rim_BAO_r_dist.max()/np.e], '-.',
                          color='black', label=r'$\sigma_{{BAO}}$ ({} $h^{{-1}}Mpc$)'.format(self.sigma_r_BAO*self.h0))
                 plt.xlabel("Distance [$h^{-1}$Mpc]")
                 plt.title('Distribution of the distance of rim galaxies \n with respect to their centers')
