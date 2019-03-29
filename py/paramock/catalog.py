@@ -125,22 +125,24 @@ class catalog:
         y = []
         z = []
         c = []
+        m = []
         if len(idx.split("cen_"))>1:
             unit_vector = hp.ang2vec(self.centers[idx].phi, self.centers[idx].theta, lonlat=True)
             curr_vector = (unit_vector * self.centers[idx].r)[0]
-            #print(curr_vector)
             x.append(curr_vector[0])
             y.append(curr_vector[1])
             z.append(curr_vector[2])
             c.append("b")
+            m.append("*")
             if not get_childs:
-                return x, y, z, c
+                return x, y, z, c, m
             for key in self.centers[idx].childs:
-                x_, y_, z_, c_ = self.get_points(key, get_childs)
+                x_, y_, z_, c_, m_ = self.get_points(key, get_childs)
                 x.append(x_[0])
                 y.append(y_[0])
                 z.append(z_[0])
                 c.append(c_[0])
+                m.append(m_[0])
         if len(idx.split("rim_"))>1:
             unit_vector = hp.ang2vec(self.rims[idx].phi, self.rims[idx].theta, lonlat=True)
             curr_vector = (unit_vector * self.rims[idx].r)[0]
@@ -148,29 +150,42 @@ class catalog:
             y.append(curr_vector[1])
             z.append(curr_vector[2])
             c.append("red")
+            m.append("D")
             if not get_childs:
-                return x, y, z, c
+                return x, y, z, c, m
             for key in self.rims[idx].childs:
-                x_, y_, z_, c_ = self.get_points(key, get_childs)
-                x.append(x_[0])
-                y.append(y_[0])
-                z.append(z_[0])
-                c.append(c_[0])
+                x_, y_, z_, c_, m_ = self.get_points(key, get_childs)
+                try:
+                    x.append(x_[0])
+                    y.append(y_[0])
+                    z.append(z_[0])
+                    c.append(c_[0])
+                    m.append(m_[0])
+                except IndexError:
+                    pass
         if len(idx.split("cenClump_"))>1:
-            unit_vector = hp.ang2vec(self.clumps_center[idx].phi, self.clumps_center[idx].theta, lonlat=True)
-            curr_vector = (unit_vector * self.clumps_center[idx].r)[0]
-            x.append(curr_vector[0])
-            y.append(curr_vector[1])
-            z.append(curr_vector[2])
-            c.append("green")
+            try:
+                unit_vector = hp.ang2vec(self.clumps_center[idx].phi, self.clumps_center[idx].theta, lonlat=True)
+                curr_vector = (unit_vector * self.clumps_center[idx].r)[0]
+                x.append(curr_vector[0])
+                y.append(curr_vector[1])
+                z.append(curr_vector[2])
+                c.append("green")
+                m.append("P")
+            except KeyError:
+                pass
         if len(idx.split("flatClump_"))>1:
-            unit_vector = hp.ang2vec(self.clumps_flat[idx].phi, self.clumps_flat[idx].theta, lonlat=True)
-            curr_vector = (unit_vector * self.clumps_flat[idx].r)[0]
-            x.append(curr_vector[0])
-            y.append(curr_vector[1])
-            z.append(curr_vector[2])
-            c.append("blue")
-        return x, y, z, c
+            try:
+                unit_vector = hp.ang2vec(self.clumps_flat[idx].phi, self.clumps_flat[idx].theta, lonlat=True)
+                curr_vector = (unit_vector * self.clumps_flat[idx].r)[0]
+                x.append(curr_vector[0])
+                y.append(curr_vector[1])
+                z.append(curr_vector[2])
+                c.append("blue")
+                m.append("v")
+            except KeyError:
+                pass
+        return x, y, z, c, m
             
     def info(self, idx, print_childs=False):
         if len(idx.split("cen_"))>1:
