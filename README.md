@@ -4,6 +4,8 @@ master: [![Build Status](https://travis-ci.com/DESI-UR/catalog_generation.svg?br
 
 development: [![Build Status](https://travis-ci.com/DESI-UR/catalog_generation.svg?branch=development)](https://travis-ci.com/DESI-UR/catalog_generation) [![CodeFactor](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/badge/development)](https://www.codefactor.io/repository/github/desi-ur/catalog_generation/overview/development)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2652957.svg)](https://doi.org/10.5281/zenodo.2652957)
+
 <!-- toc -->
 * [Requirements](#requirements)
 * [Installation](#installation)
