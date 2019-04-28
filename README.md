@@ -29,8 +29,9 @@ Generating the mock requires a completeness map and a redshift distribution. An 
 In order to avoid any possible conficts with other packages, it is advised to create a clean `conda` environment. `conda` installation instructions can be found at this [link](https://docs.conda.io/projects/conda/en/latest/user-guide/install/). The new environment can be created as follows:
 
 ```
-conda create -n paramockEnv python=3 numpy
+conda create -n paramockEnv python=PYTHON_VERSION numpy
 ```
+The package has been tested with Python 3.5, 3.6 and 3.7. It will not work with Python 2 since Python 2 will retire in less than a year.
 
 It should be noted that numpy is installed while creating the conda environment. This is due to an unexpected problem with `easy_install` not being able to install `numpy` properly.
 
